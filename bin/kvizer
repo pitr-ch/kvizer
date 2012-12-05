@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if which rbenv > /dev/null; then
+  cd $HOME/Workspace/redhat/virtual/bin
+  rbenv exec ruby ./virtual.rb $@
+else
+  echo 'no rbenv, implement it for your tool'
+fi

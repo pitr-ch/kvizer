@@ -1,0 +1,4 @@
+#!/bin/bash
+D=$HOME/katello
+export PYTHONPATH=$D/cli/src:$PYTHONPATH
+$D/cli/bin/katello --host 192.168.10.25 -u admin -p admin "$@"
