@@ -1,7 +1,8 @@
 ---
 :root_password: katello
 :user_password: katello
-:authorized_keys: "your pub keys"
+# your public key(s), usually `cat ~/.ssh/id_rsa.pub`
+:authorized_keys: "ssh-rsa somelongblob"
 :use_gui: false
 :hostonly:
   :name: vboxnet0
