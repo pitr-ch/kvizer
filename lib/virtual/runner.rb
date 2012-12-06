@@ -84,7 +84,7 @@ class Virtual
           banner 'Run a virtual machine.'
           vm_option.call self
         end
-        run { binding.pry;get_vm.run }
+        run { binding.pry; get_vm.run }
       end
 
       command 'stop' do
@@ -115,14 +115,14 @@ class Virtual
         end
       end
 
-      command 'rebuild' do
+      command 'execute' do
         options do
           banner 'Rebuild base machine.'
-          opt :job, "Job name", :short => "-j", :type => String
+          opt :start_job, "Starting job name", :short => "-s", :type => String
           opt :vm, "Virtual Machine name", :short => "-m", :type => String, :default => virtual.config.katello_base
-          opt :stop_job, "Last job name", :short => '-s', :type => String
+          opt :finish_job, "Finish job name", :short => '-f', :type => String
         end
-        run { rebuild @options[:vm], @options[:job], @options[:stop_job] }
+        run { rebuild @options[:vm], @options[:start_job], @options[:finish_job] }
       end
 
       command 'clone' do
@@ -151,13 +151,13 @@ class Virtual
 
     end
 
-    def rebuild(vm_name, job_name, stop_job_name, collection_name = :base_jobs)
+    def rebuild(vm_name, start_job_name, finish_job_name, collection_name = :base_jobs)
       collection = Virtual::Jobs2::Collection.new_by_names virtual, *virtual.config.send(collection_name)
-      job = collection[job_name] rescue Trollop::die(:job, "could not find job with name '#{job_name}'")
+      job = collection[start_job_name] rescue Trollop::die(:job, "could not find job with name '#{start_job_name}'")
 
-      last_job = collection[stop_job_name] rescue nil
-      if last_job.nil? && stop_job_name
-        Trollop::die(:stop_job, "could not find job with name'#{stop_job_name}'")
+      last_job = collection[finish_job_name] rescue nil
+      if last_job.nil? && finish_job_name
+        Trollop::die(:finish_job, "could not find job with name'#{finish_job_name}'")
       end
 
       kb = Virtual::ImageBase.new virtual, virtual.vm(vm_name), collection
