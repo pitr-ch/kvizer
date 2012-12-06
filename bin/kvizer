@@ -1,8 +1,9 @@
 #!/bin/sh
 
 if which rbenv > /dev/null; then
-  cd $HOME/Workspace/redhat/virtual/bin
-  rbenv exec ruby ./virtual.rb $@
+  root=`pwd -P`
+  cd "$root/bin"
+  rbenv exec ruby ./katello-virtualizer.rb $@
 else
   echo 'no rbenv, implement it for your tool'
 fi
