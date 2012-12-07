@@ -74,8 +74,8 @@ class Virtual
     end
 
     def ssh_connection(user, password = nil) # FIXME do better
-      # TODO ignore known hosts
-      # ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no petr@host
+                                             # TODO ignore known hosts
+                                             # ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no petr@host
       @ssh_connections[user] ||= session = begin
         logger.debug "SSH connecting #{user}"
         Net::SSH.start(ip, user, :password => password)
@@ -203,6 +203,7 @@ class Virtual
     end
 
     def power_off!
+      ssh_close
       host.shell! "VBoxManage controlvm \"#{name}\" poweroff"
     end
 
