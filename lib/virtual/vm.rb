@@ -177,7 +177,10 @@ class Virtual
     end
 
     def run(gui = config.use_gui)
-      host.shell! "VBoxManage startvm \"#{name}\" --type #{gui ? 'gui' : 'headless' }" unless running?
+      unless running?
+        setup_shared_folders
+        host.shell! "VBoxManage startvm \"#{name}\" --type #{gui ? 'gui' : 'headless' }"
+      end
     end
 
     def run_and_wait(gui = config.use_gui)
