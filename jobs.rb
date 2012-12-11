@@ -127,7 +127,7 @@ end
 
 job 'package' do
   online do
-    dirs = %w(src cli katello-configure katello-utils repos selinux/katello-selinux)
+    dirs = %w(src katello-configure katello-utils cli repos selinux/katello-selinux)
 
     rpms = dirs.map do |dir|
       logger.info "building '#{dir}'"

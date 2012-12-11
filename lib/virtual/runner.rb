@@ -145,13 +145,14 @@ class Virtual
         run do
           vm_name = @options[:name] || "ci-#{@options[:branch]}"
           clone_vm virtual.vm(virtual.config.katello_base), vm_name, 'install-packaging'
-          rebuild vm_name, 'package2', 'system-test', :build_jobs
+          rebuild vm_name, 'package2', 'system-test', :build_jobs,
+                  :package2 => { :source => @options[:git], :branch => @options[:branch] }
         end
       end
 
     end
 
-    def rebuild(vm_name, start_job_name, finish_job_name, collection_name = :base_jobs)
+    def rebuild(vm_name, start_job_name, finish_job_name, collection_name = :base_jobs, job_options = { })
       collection = Virtual::Jobs2::Collection.new_by_names virtual, *virtual.config.send(collection_name)
       job = collection[start_job_name] rescue Trollop::die(:job, "could not find job with name '#{start_job_name}'")
 
@@ -161,7 +162,7 @@ class Virtual
       end
 
       kb = Virtual::ImageBase.new virtual, virtual.vm(vm_name), collection
-      kb.rebuild job.name, last_job
+      kb.rebuild job.name, last_job, job_options
     end
 
     def clone_vm(vm, name, snapshot)

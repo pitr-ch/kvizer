@@ -1,5 +1,4 @@
-
-# README
+# Installation
 
 ## Create katello base image
 - download image: `http://archive.fedoraproject.org/pub/fedora/linux/releases/16/Fedora/x86_64/iso/Fedora-16-x86_64-netinst.iso`
@@ -12,12 +11,13 @@
       - BaseSystem/Base
       - BaseSystem/SystemTools
 
-## Usage
+## Creating base image
 
 - configure in `config.yml`
-- Add bin to PATH and run `kvizer --help`
+- add kvizer/bin to PATH
+- run `kvizer execure -s base`
 
-## Features
+# Features
 
 - automates building of remote-enabled development machine from clean fedora
 - automates CI by `kvizer ci --git <git repo> --branch <a branch>` which does:
@@ -28,4 +28,4 @@
 - platform independent (*nix systems only)
   - based on VirtualBox
 
-## TODO Documentation
+# TODO rest of the Documentation

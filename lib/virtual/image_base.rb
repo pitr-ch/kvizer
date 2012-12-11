@@ -20,17 +20,17 @@ class Virtual
         logger.error "cannot rebuild first job"
         return
       end
-      step job, last_job
+      step job, last_job, options
     end
 
-    def step(job, last_job) # TODO pass options
+    def step(job, last_job, options)
       return unless job
       logger.info "step #{job.name}"
 
-      vm.run_job job,
-                 config.job_options.has_key?(job.name.to_sym) ? config.job_options[job.name.to_sym] : { }
+      vm.run_job job, options[job.name.to_sym]
+
       vm.take_snapshot job.name
-      step collection.next_job(job), last_job unless job == last_job
+      step collection.next_job(job), last_job, options unless job == last_job
     end
 
   end
