@@ -84,7 +84,7 @@ class Virtual
           banner 'Run a virtual machine.'
           vm_option.call self
         end
-        run { binding.pry; get_vm.run }
+        run { get_vm.run }
       end
 
       command 'stop' do
