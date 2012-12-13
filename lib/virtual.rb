@@ -1,9 +1,3 @@
-# FIXME vboxnet is down after restart
-# TODO machine definition
-# TODO better basebase machine, without mine ssh key
-#   http://lukas.zapletalovi.com/2011/08/configure-red-hat-or-fedora-as-guest.html
-#   with network manager?
-#   update readme, export?
 
 require 'bundler/setup'
 
