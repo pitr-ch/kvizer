@@ -27,7 +27,7 @@ class Virtual
       return unless job
       logger.info "step #{job.name}"
 
-      vm.run_job job, options[job.name.to_sym]
+      vm.run_job job, options.fetch(job.name.to_sym, { })
 
       vm.take_snapshot job.name
       step collection.next_job(job), last_job, options unless job == last_job

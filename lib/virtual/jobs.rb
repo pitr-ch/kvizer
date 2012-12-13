@@ -52,8 +52,9 @@ class Virtual
       private
 
       def running(vm, options = { }, &block)
+        raise ArgumentError unless Hash === options
         default_options = config.job_options.has_key?(name.to_sym) ? config.job_options[name.to_sym].to_hash : { }
-        @vm, @options   = vm, default_options.merge(options.delete_if { |_, v| !v })
+        @vm, @options   = vm, default_options.merge(options) { |_, o, n| n ? n : o }
         block.call
       ensure
         @vm = @options = nil

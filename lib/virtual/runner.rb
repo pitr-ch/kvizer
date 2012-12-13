@@ -121,8 +121,12 @@ class Virtual
           opt :start_job, "Starting job name", :short => "-s", :type => String
           opt :vm, "Virtual Machine name", :short => "-m", :type => String, :default => virtual.config.katello_base
           opt :finish_job, "Finish job name", :short => '-f', :type => String
+          opt :collection, "Which job collection should be used", :short => '-c', :type => String
         end
-        run { rebuild @options[:vm], @options[:start_job], @options[:finish_job] }
+        run do
+          collection_name = @options[:collection] ? @options[:collection].to_sym : :base_job
+          rebuild @options[:vm], @options[:start_job], @options[:finish_job], collection_name
+        end
       end
 
       command 'clone' do
