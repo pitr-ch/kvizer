@@ -53,7 +53,7 @@ class Virtual
 
       def running(vm, options = { }, &block)
         default_options = config.job_options.has_key?(name.to_sym) ? config.job_options[name.to_sym].to_hash : { }
-        @vm, @options   = vm, default_options.merge(options)
+        @vm, @options   = vm, default_options.merge(options.delete_if { |_, v| !v })
         block.call
       ensure
         @vm = @options = nil
