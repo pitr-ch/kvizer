@@ -33,7 +33,7 @@ class Virtual
     end
 
     def shell(user, cmd, options = { })
-      logger.debug "shell@#{user}$ #{cmd}"
+      logger.debug "shell@#{user}$ #{cmd}".color(:green)
 
       stdout_data = ""
       stderr_data = ""
