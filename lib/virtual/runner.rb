@@ -147,10 +147,11 @@ class Virtual
           opt :name, "Machine name", :short => '-n', :type => String
         end
         run do
-          vm_name = @options[:name] || "ci-#{@options[:branch]}"
+          branch  = @options[:branch] || virtual.config.job_options.package2.branch
+          vm_name = @options[:name] || "ci-#{branch}"
           clone_vm virtual.vm(virtual.config.katello_base), vm_name, 'install-packaging'
           rebuild vm_name, 'package2', 'system-test', :build_jobs,
-                  :package2 => { :source => @options[:git], :branch => @options[:branch] }
+                  :package2 => { :source => @options[:git], :branch => branch }
         end
       end
 
