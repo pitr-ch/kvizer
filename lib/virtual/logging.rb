@@ -4,8 +4,8 @@ class Virtual
 
     def initialize(virtual, options = { })
       @virtual   = virtual
-      @formatter = options[:formatter] || Log4r::PatternFormatter.new(
-          :pattern      => options[:pattern] || '%5l %d %22c: %m',
+      @formatter = options[:formatter] || ColorFormatter.new(
+          :pattern => options[:pattern] || '%5l %d %22c: %m',
           :date_pattern => '%H:%M:%S')
       @outputter = options[:outputter] || default_outputter
     end
@@ -32,5 +32,35 @@ class Virtual
       outputter
     end
 
+  end
+
+  class ColorFormatter < Log4r::PatternFormatter
+    def initialize(options = { })
+      super
+
+      def self.format(event)
+        string = super
+        colorize(string[0..(level_size-1)], event.level) + string[level_size..-1]
+      end
+
+    end
+
+    # later we'll probably add .bright or something, that's reason for case
+    def colorize(string, level)
+      case level
+        when 1
+          string.color(:yellow)
+        when 2
+          string.color(:magenta)
+        when 3
+          string.color(:cyan)
+        when 4
+          string.color(:white)
+      end
+    end
+
+    def level_size
+      pattern =~ /(%(\d+)l)/ ? $2.to_i : 0
+    end
   end
 end

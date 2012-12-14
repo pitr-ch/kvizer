@@ -26,7 +26,7 @@ class Virtual
 
     def shell!(cmd, options = { })
       result = shell cmd, options
-      raise "cmd failed: #{cmd}\nerr:\n#{result.err}" unless result.success
+      raise "cmd failed: #{cmd}\nerr:\n#{result.err}".color(:red) unless result.success
       result
     end
 

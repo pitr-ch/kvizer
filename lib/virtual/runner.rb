@@ -1,4 +1,5 @@
 require 'trollop'
+require 'rainbow'
 
 class Virtual
   class Runner
