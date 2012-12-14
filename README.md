@@ -1,5 +1,4 @@
-
-# README
+# Installation
 
 This little tool should help you with katello development. It makes virtual server configuration easy. It's basically a wrapper
 around virtual box with CLI.
@@ -21,7 +20,7 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
       - BaseSystem/SystemTools
 - install arp-scan on host (kvizer actually uses this for detecting virtual machine ip address)
 
-## Usage
+## Creating base image
 
 - configuration is placed in `config.yml`, you can use config.template.yml as a template
 - add kvizer/bin to PATH
@@ -30,7 +29,7 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 
 note that for katello virtual machine you should allocate ~40GB of diskspace, 1.5GB of RAM and 2 CPU cores is also a good option
 
-## Features
+# Features
 
 - automates building of remote-enabled development machine from clean fedora
 - automates CI by `kvizer ci --git <git repo> --branch <a branch>` which does:
@@ -41,4 +40,4 @@ note that for katello virtual machine you should allocate ~40GB of diskspace, 1.
 - platform independent (*nix systems only)
   - based on VirtualBox
 
-## TODO Documentation
+# TODO rest of the Documentation
