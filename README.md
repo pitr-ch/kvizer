@@ -19,12 +19,16 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
       - Servers/ServerConfigurationTools
       - BaseSystem/Base
       - BaseSystem/SystemTools
+- install arp-scan on host (kvizer actually uses this for detecting virtual machine ip address)
 
 ## Usage
 
 - configuration is placed in `config.yml`, you can use config.template.yml as a template
 - add kvizer/bin to PATH
+- create a snapshot of you virtual machine named "clean installation"
 - run `kvizer execute -s base`
+
+note that for katello virtual machine you should allocate ~40GB of diskspace, 1.5GB of RAM and 2 CPU cores is also a good option
 
 ## Features
 

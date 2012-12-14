@@ -16,11 +16,19 @@ job 'install-htop' do
   online { yum_install "htop" }
 end
 
-job 'install-katello' do
+job 'install-katello-nightly' do
   online do
     vm.shell! 'root',
               "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
     yum_install "katello-repos-testing"
+    yum_install "katello-all"
+  end
+end
+
+job 'install-katello' do
+  online do
+    vm.shell! 'root',
+              "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/1.1/Fedora/16/x86_64/katello-repos-1.1.3-1.fc16.noarch.rpm"
     yum_install "katello-all"
   end
 end
