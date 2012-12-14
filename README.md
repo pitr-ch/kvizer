@@ -1,8 +1,16 @@
 # Installation
 
+This little tool should help you with katello development. It makes virtual server configuration easy. It's basically a wrapper
+around virtual box with CLI.
+
+# Howto
+
 ## Create katello base image
+
+First you must create a base Fedora 16 virtual server. This will serve as origin image for other clones which you'll use for development.
+
 - download image: `http://archive.fedoraproject.org/pub/fedora/linux/releases/16/Fedora/x86_64/iso/Fedora-16-x86_64-netinst.iso`
-- create virtual machine 
+- create virtual machine in virtual box, fill in these during installation
   - root password: katello 
     - minimal installation
     - Use `Customize now` and add packages:
@@ -10,12 +18,16 @@
       - Servers/ServerConfigurationTools
       - BaseSystem/Base
       - BaseSystem/SystemTools
+- install arp-scan on host (kvizer actually uses this for detecting virtual machine ip address)
 
 ## Creating base image
 
-- configure in `config.yml`
+- configuration is placed in `config.yml`, you can use config.template.yml as a template
 - add kvizer/bin to PATH
-- run `kvizer execure -s base`
+- create a snapshot of you virtual machine named "clean installation"
+- run `kvizer execute -s base`
+
+note that for katello virtual machine you should allocate ~40GB of diskspace, 1.5GB of RAM and 2 CPU cores is also a good option
 
 # Features
 

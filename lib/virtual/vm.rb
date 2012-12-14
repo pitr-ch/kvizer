@@ -33,7 +33,7 @@ class Virtual
     end
 
     def shell(user, cmd, options = { })
-      logger.debug "shell@#{user}$ #{cmd}"
+      logger.debug "shell@#{user}$ #{cmd}".color(:green)
 
       stdout_data = ""
       stderr_data = ""
@@ -43,7 +43,7 @@ class Virtual
 
       ssh.open_channel do |channel|
         channel.exec(cmd) do |ch, success|
-          abort "FAILED: couldn't execute command (ssh.channel.exec)" unless success
+          abort "FAILED: couldn't execute command (ssh.channel.exec)".color(:red) unless success
 
           debug = LinePrinter.new { |line| logger.debug line }
           warn  = LinePrinter.new { |line| logger.warn line }
@@ -69,7 +69,7 @@ class Virtual
 
     def shell!(user, cmd, options = { })
       result = shell user, cmd, options
-      raise CommandFailed, "cmd failed: #{cmd}\nerr:\n#{result.err}" unless result.success
+      raise CommandFailed, "cmd failed: #{cmd}\nerr:\n#{result.err}".color(:red) unless result.success
       result
     end
 

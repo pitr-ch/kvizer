@@ -8,4 +8,4 @@ gem 'trollop'
 gem 'log4r'
 gem 'net-ssh'
 gem 'pry'
-
+gem 'rainbow'

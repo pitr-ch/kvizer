@@ -1,7 +1,8 @@
 ---
 :root_password: katello
 :user_password: katello
-:authorized_keys: "your pub keys"
+# your public key(s), usually `cat ~/.ssh/id_rsa.pub`
+:authorized_keys: "ssh-rsa somelongblob"
 :use_gui: false
 :hostonly:
   :name: vboxnet0
@@ -30,6 +31,7 @@
 - setup-shared-folders
 - install-htop
 - install-packaging
+# note you can use install-katello-nightly on next line instead if you want to install nightly builds
 - install-katello
 - configure-katello
 - turnoff-services
