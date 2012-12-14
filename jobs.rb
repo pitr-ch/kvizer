@@ -171,7 +171,7 @@ job 'package2' do
       logger.info "building '#{dir}'"
       result = vm.shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=.fc16"
       result.out =~ /^Wrote: (.*src\.rpm)$/
-      vm.shell! 'root', "echo y | yum-builddep #{$1}"
+      vm.shell! 'root', "yum-builddep -y #{$1}"
       result = vm.shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.fc16"
       result.out =~ /Successfully built: (.*)\Z/
       $1.split(/\s/).tap { |rpms| logger.info "rpms: #{rpms.join(' ')}" }
