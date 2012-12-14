@@ -25,12 +25,12 @@ class Virtual
         running vm, options do
           if offline_job
             vm.stop_and_wait
-            logger.info "running offline job"
+            logger.info "running offline job".color(:yellow).bright
             instance_eval &offline_job
           end
           if online_job
             vm.run_and_wait
-            logger.info "running online job"
+            logger.info "running online job".color(:yellow).bright
             instance_eval &online_job
           end
         end
@@ -72,7 +72,7 @@ class Virtual
       end
 
       def job(name, template = nil, &definition)
-        raise ArgumentError, "name '#{name}' already taken" if @jobs[name]
+        raise ArgumentError, "name '#{name}' already taken".color(:red) if @jobs[name]
         @jobs[name] = if template
                         @jobs[template].clone(name)
                       else
@@ -85,7 +85,8 @@ class Virtual
       attr_reader :jobs, :virtual
 
       def self.new_by_names(virtual, *job_names)
-        new virtual, *job_names.map { |name| virtual.job_definitions[name] or raise "unknown job '#{name}'" }
+        new virtual, *job_names.map { |name| virtual.job_definitions[name] or
+            raise "unknown job '#{name}'".color(:red) }
       end
 
       def initialize(virtual, *jobs)
@@ -96,7 +97,7 @@ class Virtual
 
       def [](name)
         @map[name] or
-            raise ArgumentError, "job with name '#{name}' was not found, available: #{@map.keys.join(', ')}"
+            raise ArgumentError, "job with name '#{name}' was not found, available: #{@map.keys.join(', ')}".color(:red)
       end
 
       def job_index(job)
