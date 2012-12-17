@@ -1,4 +1,3 @@
-
 require 'bundler/setup'
 
 require 'popen4'
@@ -38,7 +37,9 @@ class Virtual
 
   def vm(part_name)
     regexp = part_name.kind_of?(String) ? /#{part_name}/ : part_name
-    vms.find { |vm| vm.name =~ regexp }
+    vms.select { |vm| vm.name =~ regexp }.
+        tap { |arr| raise "ambiguous vm name #{part_name}" if arr.size > 1 }.
+        first
   end
 
   def vm!(part_name)
