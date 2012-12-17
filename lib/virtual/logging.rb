@@ -31,18 +31,17 @@ class Virtual
       outputter.level = virtual.config.logger.level
       outputter
     end
-
   end
 
   class ColorFormatter < Log4r::PatternFormatter
     def initialize(options = { })
       super
 
-      def self.format(event)
-        string = super
+      original_method = self.method(:format)
+      singleton_class.send :define_method, :format do |event|
+        string = original_method.call(event)
         colorize(string[0..(level_size-1)], event.level) + string[level_size..-1]
       end
-
     end
 
     # later we'll probably add .bright or something, that's reason for case
