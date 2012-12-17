@@ -67,7 +67,11 @@ class Virtual
     end
 
     def define_commands
-      vm_option = lambda { |o| o.opt :vm, "Virtual Machine name", :short => "-m", :type => String }
+      vm_option = lambda do |o, default = nil|
+        options = { :short => "-m", :type => :string }
+        options.merge! :default => default if default
+        o.opt :vm, "Virtual Machine name", options
+      end
       virtual   = self.virtual
 
       command 'info' do
@@ -107,7 +111,7 @@ class Virtual
       command 'ssh' do
         options do
           banner 'SSH an user to a machine.'
-          opt :user, "User login", :short => "-u", :type => String, :default => 'user'
+          opt :user, "User login", :short => "-u", :type => :string, :default => 'user'
           vm_option.call self
         end
         run do
@@ -116,13 +120,13 @@ class Virtual
         end
       end
 
-      command 'execute' do
+      command 'build' do
         options do
-          banner 'Rebuild base machine.'
-          opt :start_job, "Starting job name", :short => "-s", :type => String
-          opt :vm, "Virtual Machine name", :short => "-m", :type => String, :default => virtual.config.katello_base
-          opt :finish_job, "Finish job name", :short => '-f', :type => String
-          opt :collection, "Which job collection should be used", :short => '-c', :type => String
+          banner 'Build a machine by running job collection'
+          opt :start_job, "Starting job name", :short => "-s", :type => :string
+          vm_option.call self, virtual.config.katello_base
+          opt :finish_job, "Finish job name", :short => '-f', :type => :string
+          opt :collection, "Which job collection should be used", :short => '-c', :type => :string
         end
         run do
           collection_name = @options[:collection] ? @options[:collection].to_sym : :base_job
@@ -130,12 +134,30 @@ class Virtual
         end
       end
 
+      command 'execute' do
+        options do
+          banner 'Execute single job on a machine'
+          opt :job, "Job name", :short => "-j", :type => :string
+          opt :options, "Job options string value is evaluated by Ruby to get the Hash",
+              :short => "-o", :type => :string
+          vm_option.call self
+        end
+        run do
+          job = virtual.job_definitions[@options[:job]]
+          unless job
+            Trollop.die :job, "'#{@options[:job]}' could not find a job, avaliable:\n  " +
+                "#{virtual.job_definitions.keys.join("\n  ")}"
+          end
+          get_vm.run_job job, eval(@options[:options])
+        end
+      end
+
       command 'clone' do
         options do
           banner 'Clone a virtual machine'
-          opt :name, "Name of the new machine", :short => '-n', :type => String
-          opt :snapshot, "Name of a source snapshot", :short => '-s', :type => String
-          vm_option.call self
+          opt :name, "Name of the new machine", :short => '-n', :type => :string
+          opt :snapshot, "Name of a source snapshot", :short => '-s', :type => :string
+          vm_option.call self, virtual.config.katello_base
         end
         run { clone_vm get_vm, @options[:name], @options[:snapshot] }
       end
@@ -143,9 +165,9 @@ class Virtual
       command 'ci' do
         options do
           banner 'From a git repository: build rpms, install them, run katello-configuration and run system tests'
-          opt :git, "url/path to git repository", :short => '-g', :type => String
-          opt :branch, "branch to checkout", :short => '-b', :type => String
-          opt :name, "Machine name", :short => '-n', :type => String
+          opt :git, "url/path to git repository", :short => '-g', :type => :string
+          opt :branch, "branch to checkout", :short => '-b', :type => :string
+          opt :name, "Machine name", :short => '-n', :type => :string
         end
         run do
           branch  = @options[:branch] || virtual.config.job_options.package2.branch
