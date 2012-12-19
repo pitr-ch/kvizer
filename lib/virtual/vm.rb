@@ -78,7 +78,7 @@ class Virtual
                                              # ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no petr@host
       @ssh_connections[user] ||= session = begin
         logger.debug "SSH connecting #{user}"
-        Net::SSH.start(ip, user, :password => password)
+        Net::SSH.start(ip, user, :password => password, :paranoid => false)
       end
     end
 
