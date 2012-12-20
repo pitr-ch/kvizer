@@ -34,7 +34,7 @@ job 'install-katello' do
 end
 
 job 'configure-katello' do
-  online { vm.shell! 'root', "katello-configure" }
+  online { vm.shell! 'root', "katello-configure --no-bars" }
 end
 
 job 'turnoff-services' do
