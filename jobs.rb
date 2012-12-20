@@ -133,27 +133,6 @@ job 'install-packaging' do
   end
 end
 
-job 'package' do
-  online do
-    dirs = %w(src katello-configure katello-utils cli repos selinux/katello-selinux)
-
-    rpms = dirs.map do |dir|
-      logger.info "building '#{dir}'"
-      result = vm.shell! 'user', "cd #{config.katello_path}/#{dir}; tito build --test --srpm --dist=.fc16"
-      result.out =~ /^Wrote: (.*src\.rpm)$/
-      vm.shell! 'root', "echo y | yum-builddep #{$1}"
-      result = vm.shell! 'user', "cd #{config.katello_path}/#{dir}; tito build --test --rpm --dist=.fc16"
-      result.out =~ /Successfully built: (.*)\Z/
-      $1.split(/\s/).tap { |rpms| logger.info "rpms: #{rpms.join(' ')}" }
-    end.flatten
-
-    logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
-
-    to_install = rpms.select { |rpm| rpm !~ /headpin|devel|src\.rpm/ }
-    vm.shell 'root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"
-  end
-end
-
 job 'package2' do
   online do
     vm.shell! 'user', "git clone #{options[:source]} katello-build-source"
