@@ -93,12 +93,19 @@ class Virtual
       status == :running
     end
 
-    def wait_for(status)
+    def wait_for(status, timeout = nil)
+      start = Time.now
       loop do
         virtual.info.reload_attributes
         current = self.status
-        return if current == status
+        return true if current == status
         logger.info "Waiting for: #{status}, now is: #{current}"
+
+        if timeout && timeout < (Time.now - start)
+          logger.warn 'Timeout expired.'
+          return false
+        end
+
         sleep 5
       end
     end
@@ -199,7 +206,7 @@ class Virtual
 
     def stop_and_wait
       stop
-      wait_for :stopped
+      wait_for(:stopped, 5*60) || power_off!
     end
 
     def power_off!
@@ -230,6 +237,7 @@ class Virtual
     end
 
     def setup_shared_folders
+      raise if running?
       config.shared_folders.each do |name, path|
         host.shell "VBoxManage sharedfolder remove \"#{self.name}\" --name \"#{name}\""
         host.shell! "VBoxManage sharedfolder add \"#{self.name}\" --name \"#{name}\" --hostpath \"#{path}\" " +

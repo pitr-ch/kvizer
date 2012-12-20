@@ -54,7 +54,7 @@ class Virtual
         when 3
           string.color(:cyan)
         when 4
-          string.color(:white)
+          string.color(:red)
       end
     end
 
