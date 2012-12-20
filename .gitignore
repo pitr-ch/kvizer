@@ -1,3 +1,5 @@
 .idea
 .rbenv-version
 config.yml
+gems
+bin/kvizer

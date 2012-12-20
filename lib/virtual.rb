@@ -5,7 +5,6 @@ require 'pp'
 require 'log4r'
 require 'net/ssh'
 require 'pry'
-require 'active_support/inflector'
 
 lib_path = File.expand_path(File.join(File.dirname(__FILE__)))
 $: << lib_path unless $:.include? lib_path

@@ -188,8 +188,8 @@ class Virtual
       host.shell! "VBoxManage snapshot \"#{name}\" delete \"#{snapshot_name}\""
     end
 
-    def run_and_wait(gui = config.use_gui)
-      run gui
+    def run_and_wait(headless = config.headless)
+      run headless
       wait_for :running
       set_hostname
     end
@@ -230,6 +230,7 @@ class Virtual
     def setup_shared_folders
       raise if running?
       config.shared_folders.each do |name, path|
+        path = File.expand_path path, virtual.root
         host.shell "VBoxManage sharedfolder remove \"#{self.name}\" --name \"#{name}\""
         host.shell! "VBoxManage sharedfolder add \"#{self.name}\" --name \"#{name}\" --hostpath \"#{path}\" " +
                         "--automount"
@@ -243,10 +244,10 @@ class Virtual
 
     private
 
-    def run(gui = config.use_gui)
+    def run(headless = config.headless)
       unless running?
         setup_shared_folders
-        host.shell! "VBoxManage startvm \"#{name}\" --type #{gui ? 'gui' : 'headless' }"
+        host.shell! "VBoxManage startvm \"#{name}\" --type #{headless ? 'headless' : 'gui' }"
       end
     end
 

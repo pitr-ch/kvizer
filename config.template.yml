@@ -1,9 +1,15 @@
 ---
+# passwords of virtual machine users
 :root_password: katello
 :user_password: katello
+
 # your public key(s), usually `cat ~/.ssh/id_rsa.pub`
 :authorized_keys: "ssh-rsa somelongblob"
-:use_gui: false
+
+# run virtual machines headless?
+:headless: true
+
+# configuration of a private network for katello machines
 :hostonly:
   :name: vboxnet0
   :host_ip: 192.168.25.10
@@ -11,17 +17,32 @@
     :ip: 192.168.25.1
     :mask: 255.255.255.0
     :lower_ip: 192.168.25.100
+    # if you have lot of machines, stretch the boundary
     :upper_ip: 192.168.25.110
+
 :logger:
   :output: "stdout"
   :level: 0
+
+# define which directories to mount on a virtual machine
+#   key is name of the directory on VM in user's home (/home/user/redhat)
+#   value is path on host, for relative paths root of kvizer is used
 :shared_folders:
-  :redhat: /Users/pitr/Workspace/redhat
-  :remote_bin: /Users/pitr/Workspace/redhat/virtual/remote_bin
-  :support: /Users/pitr/Workspace/redhat/virtual/support
-:katello_path: /home/user/redhat/katello # path to katello on the machine
+  :redhat: /path/to/your/repositories/redhat
+
+  # should not be touched
+  :remote_bin: ./remote_bin
+  :support: ./support
+
+# path to katello on the machine
+:katello_path: /home/user/redhat/katello
+
 :virtual_box_version: 4.2.4
-:katello_base: katello-base2
+
+# name of the katello base machine
+:katello_base: katello-base
+
+# job collections
 :base_jobs:
 - clean installation
 - base
@@ -31,8 +52,8 @@
 - setup-shared-folders
 - install-htop
 - install-packaging
-# note you can use install-katello-nightly on next line instead if you want to install nightly builds
-- install-katello
+# note you can use install-katello if nightly is broken, but it can be outdated
+- install-katello-nightly
 - configure-katello
 - turnoff-services
 - relax-security
@@ -42,6 +63,8 @@
 - package2
 - reconfigure-katello
 - system-test
+
+# default options of jobs
 :job_options:
   :package2:
     :source: /home/user/redhat/katello
