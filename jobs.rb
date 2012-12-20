@@ -139,7 +139,11 @@ job 'package2' do
     vm.shell! 'user', "cd katello-build-source; git checkout #{options[:branch]}"
 
     vm.shell! 'root',
+              #"rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-1.3.1-1.fc16.noarch.rpm"
+    # latest links to 1.2, use above variant when you encounter problems
               "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
+
+
     yum_install "katello-repos-testing"
 
     yum_install "puppet" # FIXME workaround for missing puppet user when puppet is installed by yum-builddep
@@ -172,7 +176,7 @@ job 'reconfigure-katello', 'configure-katello'
 job 'system-test' do
   online do
     binding.pry
-    result = vm.shell 'user', '/usr/share/katello/script/cli-tests/cli-system-test all'
+    result = vm.shell 'user', "/usr/share/katello/script/cli-tests/cli-system-test all #{options[:extra]}"
     logger.error "system tests FAILED" unless result.success
   end
 end

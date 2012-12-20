@@ -216,7 +216,7 @@ class Virtual
 
     def connect(user)
       run_and_wait
-      cmd = "ssh #{user}@#{ip}"
+      cmd = "ssh #{user}@#{ip} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
       logger.info "connecting: #{cmd}"
       exec cmd
     end
