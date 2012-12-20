@@ -107,10 +107,7 @@ class Virtual
         end
         run do
           vm = get_vm
-          if vm.running?
-            vm.power_off!
-            sleep 1
-          end
+          vm.power_off! if vm.running?
           vm.delete
         end
       end

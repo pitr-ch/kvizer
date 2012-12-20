@@ -212,6 +212,7 @@ class Virtual
     def power_off!
       ssh_close
       host.shell! "VBoxManage controlvm \"#{name}\" poweroff"
+      sleep 1
     end
 
     def connect(user)
