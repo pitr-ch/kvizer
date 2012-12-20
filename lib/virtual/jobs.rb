@@ -49,6 +49,20 @@ class Virtual
         vm.shell! 'root', "yum -y install #{packages.join(' ')}"
       end
 
+      def wait_for(timeout = nil, sleep_interval = 5, &condition)
+        start = Time.now
+        loop do
+          return true if condition.call
+
+          if timeout && timeout < (Time.now - start)
+            logger.warn 'Timeout expired.'
+            return false
+          end
+
+          sleep sleep_interval
+        end
+      end
+
       private
 
       def running(vm, options = { }, &block)

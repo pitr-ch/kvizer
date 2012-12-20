@@ -117,13 +117,9 @@ job 'setup-development' do
 
     # create katello db
     waiting = 0
-    loop do
-      break if vm.shell('root', 'service postgresql status').success
-      waiting += 1
-      sleep 1
-      raise 'db is not running even after 30s' if waiting > 30
-    end
-    vm.shell! 'root', "su - postgres -c 'createuser -dls katello  --no-password'"
+    wait_for(60) { vm.shell('root', 'service postgresql status').success } ||
+        raise('db is not running even after 60s')
+    vm.shell! 'root', 'su - postgres -c \'createuser -dls katello  --no-password\''
   end
 end
 
@@ -140,7 +136,7 @@ job 'package2' do
 
     vm.shell! 'root',
               #"rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-1.3.1-1.fc16.noarch.rpm"
-    # latest links to 1.2, use above variant when you encounter problems
+              # latest links to 1.2, use above variant when you encounter problems
               "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
 
 
@@ -175,7 +171,8 @@ job 'reconfigure-katello', 'configure-katello'
 
 job 'system-test' do
   online do
-    binding.pry
+    wait_for(600, 20) { vm.shell('user', 'katello -u admin -p admin ping').success } ||
+        raise('Katello is not healthy')
     result = vm.shell 'user', "/usr/share/katello/script/cli-tests/cli-system-test all #{options[:extra]}"
     logger.error "system tests FAILED" unless result.success
   end
