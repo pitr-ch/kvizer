@@ -50,9 +50,9 @@ class Virtual
         when 1
           string.color(:yellow)
         when 2
-          string.color(:magenta)
-        when 3
           string.color(:cyan)
+        when 3
+          string.color(:magenta)
         when 4
           string.color(:red)
       end
