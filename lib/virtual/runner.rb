@@ -100,6 +100,21 @@ class Virtual
         run { get_vm.stop_and_wait }
       end
 
+      command 'delete' do
+        options do
+          banner 'Delete a virtual machine.'
+          vm_option.call self
+        end
+        run do
+          vm = get_vm
+          if vm.running?
+            vm.power_off!
+            sleep 1
+          end
+          vm.delete
+        end
+      end
+
       command 'power-off' do
         options do
           banner 'Power off a virtual machine.'
