@@ -65,5 +65,9 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 
 - run `kvizer build -s base`
 
+## Run CI
+
+- run `kvizer ci -b your_branch` to test if it builds, configures and runs system-tests successfully
+
 
 
