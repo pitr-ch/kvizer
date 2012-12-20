@@ -125,6 +125,11 @@ class Virtual
       virtual.vms(true)
     end
 
+    def set_hostname
+      raise unless running?
+      shell 'root', "hostname #{name}"
+    end
+
     def status
       result      = host.shell!('VBoxManage list runningvms').out
       box_status  = !!(result =~ /"#{name}"/)
@@ -183,25 +188,10 @@ class Virtual
       host.shell! "VBoxManage snapshot \"#{name}\" delete \"#{snapshot_name}\""
     end
 
-    def run(gui = config.use_gui)
-      unless running?
-        setup_shared_folders
-        host.shell! "VBoxManage startvm \"#{name}\" --type #{gui ? 'gui' : 'headless' }"
-      end
-    end
-
     def run_and_wait(gui = config.use_gui)
       run gui
       wait_for :running
-    end
-
-    def stop
-      unless status == :stopped
-        shell 'root', 'service pulp-server stop'
-        sleep 5
-        ssh_close
-        host.shell! "VBoxManage controlvm \"#{name}\" acpipowerbutton"
-      end
+      set_hostname
     end
 
     def stop_and_wait
@@ -251,6 +241,23 @@ class Virtual
       job.run self, options
     end
 
+    private
+
+    def run(gui = config.use_gui)
+      unless running?
+        setup_shared_folders
+        host.shell! "VBoxManage startvm \"#{name}\" --type #{gui ? 'gui' : 'headless' }"
+      end
+    end
+
+    def stop
+      unless status == :stopped
+        shell 'root', 'service pulp-server stop'
+        sleep 5
+        ssh_close
+        host.shell! "VBoxManage controlvm \"#{name}\" acpipowerbutton"
+      end
+    end
 
     #def mount_point_path
     #  @mount_point_path ||= File.join(config.vbox.mount_dir, name)
