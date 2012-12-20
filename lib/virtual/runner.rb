@@ -89,7 +89,7 @@ class Virtual
           banner 'Run a virtual machine.'
           vm_option.call self
         end
-        run { get_vm.run }
+        run { get_vm.run_and_wait }
       end
 
       command 'stop' do
@@ -97,7 +97,7 @@ class Virtual
           banner 'Stop a virtual machine.'
           vm_option.call self
         end
-        run { get_vm.stop }
+        run { get_vm.stop_and_wait }
       end
 
       command 'power-off' do
