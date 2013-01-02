@@ -22,7 +22,7 @@ class Virtual
   require 'virtual/host'
   require 'virtual/logging'
   require 'virtual/jobs'
-  require 'virtual/image_base'
+  require 'virtual/image_builder'
 
   attr_reader :logger, :info, :host, :logging
 

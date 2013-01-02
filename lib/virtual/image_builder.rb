@@ -1,5 +1,5 @@
 class Virtual
-  class ImageBase
+  class ImageBuilder
     include Shortcuts
 
     attr_reader :virtual, :vm, :collection, :logger

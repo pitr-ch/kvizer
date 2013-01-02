@@ -201,7 +201,7 @@ class Virtual
         Trollop::die(:finish_job, "could not find job with name'#{finish_job_name}'")
       end
 
-      kb = Virtual::ImageBase.new virtual, virtual.vm(vm_name), collection
+      kb = Virtual::ImageBuilder.new virtual, virtual.vm(vm_name), collection
       kb.rebuild job.name, last_job, job_options
     end
 
