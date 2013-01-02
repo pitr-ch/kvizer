@@ -63,6 +63,14 @@ class Kvizer
         end
       end
 
+      def shell(*args)
+        vm.shell(*args)
+      end
+
+      def shell!(*args)
+        vm.shell!(*args)
+      end
+
       private
 
       def running(vm, options = { }, &block)

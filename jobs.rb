@@ -6,8 +6,8 @@ job 'base' do
     vm.setup_private_network
   end
   online do
-    vm.shell! 'root', 'mkdir -p .ssh', :password => config.root_password
-    vm.shell! 'root', %(printf "#{config.authorized_keys}" > .ssh/authorized_keys),
+    shell! 'root', 'mkdir -p .ssh', :password => config.root_password
+    shell! 'root', %(printf "#{config.authorized_keys}" > .ssh/authorized_keys),
               :password => config.root_password
   end
 end
@@ -18,7 +18,7 @@ end
 
 job 'install-katello-nightly' do
   online do
-    vm.shell! 'root',
+    shell! 'root',
               "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
     yum_install "katello-repos-testing"
     yum_install "katello-all"
@@ -27,48 +27,48 @@ end
 
 job 'install-katello' do
   online do
-    vm.shell! 'root',
+    shell! 'root',
               "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/1.1/Fedora/16/x86_64/katello-repos-1.1.3-1.fc16.noarch.rpm"
     yum_install "katello-all"
   end
 end
 
 job 'configure-katello' do
-  online { vm.shell! 'root', "katello-configure --no-bars" }
+  online { shell! 'root', "katello-configure --no-bars" }
 end
 
 job 'turnoff-services' do
   online do
-    vm.shell! 'root', 'setenforce 0'
-    vm.shell! 'root', 'service iptables stop'
-    vm.shell! 'root', 'service katello stop'
-    vm.shell! 'root', 'service katello-jobs stop'
-    vm.shell! 'root', 'chkconfig iptables off'
-    vm.shell! 'root', 'chkconfig katello off'
-    vm.shell! 'root', 'chkconfig katello-jobs off'
+    shell! 'root', 'setenforce 0'
+    shell! 'root', 'service iptables stop'
+    shell! 'root', 'service katello stop'
+    shell! 'root', 'service katello-jobs stop'
+    shell! 'root', 'chkconfig iptables off'
+    shell! 'root', 'chkconfig katello off'
+    shell! 'root', 'chkconfig katello-jobs off'
     # TODO stop foreman
   end
 end
 
 job 'add-user' do
   online do
-    vm.shell! 'root', 'useradd user -G wheel'
-    vm.shell! 'root', 'passwd user -f -u'
-    vm.shell! 'root', "echo #{config.user_password} | passwd user --stdin"
-    vm.shell! 'root', 'su user -c "mkdir /home/user/.ssh"'
-    vm.shell! 'root', 'su user -c "touch /home/user/.ssh/authorized_keys"'
-    vm.shell! 'root', 'cat /root/.ssh/authorized_keys > /home/user/.ssh/authorized_keys'
+    shell! 'root', 'useradd user -G wheel'
+    shell! 'root', 'passwd user -f -u'
+    shell! 'root', "echo #{config.user_password} | passwd user --stdin"
+    shell! 'root', 'su user -c "mkdir /home/user/.ssh"'
+    shell! 'root', 'su user -c "touch /home/user/.ssh/authorized_keys"'
+    shell! 'root', 'cat /root/.ssh/authorized_keys > /home/user/.ssh/authorized_keys'
 
-    vm.shell! 'root', 'chmod u+w /etc/sudoers'
-    vm.shell! 'root',
+    shell! 'root', 'chmod u+w /etc/sudoers'
+    shell! 'root',
               'sed -i -E "s/# %wheel\s+ALL=\(ALL\)\s+NOPASSWD: ALL/%wheel\tALL=\(ALL\)\tNOPASSWD: ALL/" ' +
                   '/etc/sudoers'
-    vm.shell! 'root',
+    shell! 'root',
               'sed -i -E "s/%wheel\s+ALL=\(ALL\)\s+ALL/# %wheel\tALL=\(ALL\)\tALL/" /etc/sudoers'
-    vm.shell! 'root',
+    shell! 'root',
               'sed -i -E "s/Defaults\s+requiretty/# Defaults\trequiretty/" /etc/sudoers'
-    vm.shell! 'root', 'chmod u-w /etc/sudoers'
-    vm.shell! 'user', 'sudo echo a' # test
+    shell! 'root', 'chmod u-w /etc/sudoers'
+    shell! 'user', 'sudo echo a' # test
   end
 end
 
@@ -76,13 +76,13 @@ job 'install-guest-additions' do
   online do
     version = config.virtual_box_version
     yum_install %w(dkms kernel-devel @development-tools)
-    vm.shell! 'root',
+    shell! 'root',
               "wget http://download.virtualbox.org/virtualbox/#{version}/VBoxGuestAdditions_#{version}.iso"
-    vm.shell! 'root', 'mkdir additions'
-    vm.shell! 'root', "mount -o loop VBoxGuestAdditions_#{version}.iso ./additions"
-    vm.shell! 'root', 'additions/VBoxLinuxAdditions.run'
-    vm.shell! 'root', 'usermod -a -G vboxsf root'
-    vm.shell! 'root', 'usermod -a -G vboxsf user'
+    shell! 'root', 'mkdir additions'
+    shell! 'root', "mount -o loop VBoxGuestAdditions_#{version}.iso ./additions"
+    shell! 'root', 'additions/VBoxLinuxAdditions.run'
+    shell! 'root', 'usermod -a -G vboxsf root'
+    shell! 'root', 'usermod -a -G vboxsf user'
   end
 end
 
@@ -90,51 +90,56 @@ job 'setup-shared-folders' do
   offline { vm.setup_shared_folders }
   online do
     config.shared_folders.each do |name, path|
-      vm.shell! 'user', "ln -s /media/sf_#{name}/ #{name}"
+      shell! 'user', "ln -s /media/sf_#{name}/ #{name}"
     end
-    vm.shell! 'user', 'rm .bash_profile'
-    vm.shell! 'user', 'ln -s /home/user/support/.bash_profile .bash_profile'
+    shell! 'user', 'rm .bash_profile'
+    shell! 'user', 'ln -s /home/user/support/.bash_profile .bash_profile'
   end
 end
 
 #class Bundle < Job
 #  def online_job
-#    vm.shell! 'root', 'yum install -y git tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt ' +
+#    shell! 'root', 'yum install -y git tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt ' +
 #        'libxslt-devel'
-#    #vm.shell! 'user', 'cd katello/src; sudo bundle install'
+#    #shell! 'user', 'cd katello/src; sudo bundle install'
 #  end
 #end
 
 job 'setup-development' do
   online do
-    vm.shell! 'root', 'rm /etc/katello/katello.yml'
-    vm.shell! 'root', "ln -s #{config.katello_path}/src/config/katello.yml /etc/katello/katello.yml"
+    shell! 'root', 'rm /etc/katello/katello.yml'
+    shell! 'root', "ln -s #{config.katello_path}/src/config/katello.yml /etc/katello/katello.yml"
 
     # reset oauth
-    vm.shell! 'user', "sudo #{config.katello_path}/src/script/reset-oauth shhhh"
-    vm.shell! 'root', 'service tomcat6 restart'
-    vm.shell! 'root', 'service pulp-server restart'
+    shell! 'user', "sudo #{config.katello_path}/src/script/reset-oauth shhhh"
+    shell! 'root', 'service tomcat6 restart'
+    shell! 'root', 'service pulp-server restart'
 
     # create katello db
     waiting = 0
-    wait_for(60) { vm.shell('root', 'service postgresql status').success } ||
+    wait_for(60) { shell('root', 'service postgresql status').success } ||
         raise('db is not running even after 60s')
-    vm.shell! 'root', 'su - postgres -c \'createuser -dls katello  --no-password\''
+    shell! 'root', 'su - postgres -c \'createuser -dls katello  --no-password\''
   end
 end
 
 job 'install-packaging' do
   online do
     yum_install %w(tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt libxslt-devel)
+
+    # koji setup
+    #shell! 'user', 'mkdir $HOME/.koji'
+    #shell! 'user', 'ln -s $HOME/support/koji/katello-config $HOME/.koji/katello-config'
+    #shell! 'user', %(echo 'KOJI_OPTIONS=-c ~/.koji/katello-config build --nowait' | tee $HOME/.titorc)
   end
 end
 
 job 'package2' do
   online do
-    vm.shell! 'user', "git clone #{options[:source]} katello-build-source"
-    vm.shell! 'user', "cd katello-build-source; git checkout #{options[:branch]}"
+    shell! 'user', "git clone #{options[:source]} katello-build-source"
+    shell! 'user', "cd katello-build-source; git checkout #{options[:branch]}"
 
-    vm.shell! 'root',
+    shell! 'root',
               #"rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-1.3.1-1.fc16.noarch.rpm"
               # latest links to 1.2, use above variant when you encounter problems
               "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
@@ -148,10 +153,10 @@ job 'package2' do
 
     rpms = spec_dirs.map do |dir|
       logger.info "building '#{dir}'"
-      result = vm.shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=.fc16"
+      result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=.fc16"
       result.out =~ /^Wrote: (.*src\.rpm)$/
-      vm.shell! 'root', "yum-builddep -y #{$1}"
-      result = vm.shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.fc16"
+      shell! 'root', "yum-builddep -y #{$1}"
+      result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.fc16"
       result.out =~ /Successfully built: (.*)\Z/
       $1.split(/\s/).tap { |rpms| logger.info "rpms: #{rpms.join(' ')}" }
     end.flatten
@@ -159,9 +164,9 @@ job 'package2' do
     logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
 
     to_install = rpms.select { |rpm| rpm !~ /headpin|devel|src\.rpm/ }
-    result     = vm.shell 'root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"
+    result     = shell 'root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"
     unless result.success
-      vm.shell 'root', "rpm -Uvh --oldpackage --force #{to_install.join ' '}"
+      shell 'root', "rpm -Uvh --oldpackage --force #{to_install.join ' '}"
     end
     #rpm -Uvh --oldpackage --force $RPMBUILD/*/*/*rpm
   end
@@ -171,44 +176,44 @@ job 'reconfigure-katello', 'configure-katello'
 
 job 'system-test' do
   online do
-    wait_for(600, 20) { vm.shell('user', 'katello -u admin -p admin ping').success } ||
+    wait_for(600, 20) { shell('user', 'katello -u admin -p admin ping').success } ||
         raise('Katello is not healthy')
-    result = vm.shell 'user', "/usr/share/katello/script/cli-tests/cli-system-test all #{options[:extra]}"
+    result = shell 'user', "/usr/share/katello/script/cli-tests/cli-system-test all #{options[:extra]}"
     logger.error "system tests FAILED" unless result.success
   end
 end
 
 job 'update' do
-  online { vm.shell! 'root', 'yum update -y' }
+  online { shell! 'root', 'yum update -y' }
 end
 
 job 'relax-security' do
   online do
     # allow incoming connections to postgresql
-    unless vm.shell('root', 'cat /var/lib/pgsql/data/pg_hba.conf | grep "192.168.25.0/24"').success
-      vm.shell! 'root',
+    unless shell('root', 'cat /var/lib/pgsql/data/pg_hba.conf | grep "192.168.25.0/24"').success
+      shell! 'root',
                 'echo "host all all 192.168.25.0/24 trust" | tee -a /var/lib/pgsql/data/pg_hba.conf'
     end
-    vm.shell! 'root',
+    shell! 'root',
               "sed -i 's/^#.*listen_addresses =.*/listen_addresses = '\\'*\\'/ " +
                   '/var/lib/pgsql/data/postgresql.conf'
 
     # allow incoming connections to elasticsearch
     el_config = '/etc/elasticsearch/elasticsearch.yml'
-    vm.shell! 'root', "sed -i 's/^.*network.bind_host.*/network.bind_host: 0.0.0.0/' #{el_config}"
-    vm.shell! 'root', "sed -i 's/^.*network.publish_host.*/network.publish_host: 0.0.0.0/' #{el_config}"
-    vm.shell! 'root', "sed -i 's/^.*network.host.*/network.host: 0.0.0.0/' #{el_config}"
+    shell! 'root', "sed -i 's/^.*network.bind_host.*/network.bind_host: 0.0.0.0/' #{el_config}"
+    shell! 'root', "sed -i 's/^.*network.publish_host.*/network.publish_host: 0.0.0.0/' #{el_config}"
+    shell! 'root', "sed -i 's/^.*network.host.*/network.host: 0.0.0.0/' #{el_config}"
 
     # reset katello secret to "katello"
-    vm.shell! 'root', "sed -i 's/^.*oauth_secret: .*/oauth_secret: shhhh/' /etc/pulp/pulp.conf"
-    vm.shell! 'root', "sed -i 's/^.*candlepin.auth.oauth.consumer.katello.secret =.*/" +
+    shell! 'root', "sed -i 's/^.*oauth_secret: .*/oauth_secret: shhhh/' /etc/pulp/pulp.conf"
+    shell! 'root', "sed -i 's/^.*candlepin.auth.oauth.consumer.katello.secret =.*/" +
         "candlepin.auth.oauth.consumer.katello.secret = shhhh/' /etc/candlepin/candlepin.conf"
-    vm.shell! 'root', "sed -i 's/^.*oauth_secret: .*/    oauth_secret: shhhh/' /etc/katello/katello.yml"
+    shell! 'root', "sed -i 's/^.*oauth_secret: .*/    oauth_secret: shhhh/' /etc/katello/katello.yml"
 
-    vm.shell! 'root', 'service pulp-server restart'
-    vm.shell! 'root', 'service tomcat6 restart'
+    shell! 'root', 'service pulp-server restart'
+    shell! 'root', 'service tomcat6 restart'
     #       /home/use r/support/start-elastic.sh
-    vm.shell! 'root', 'service elasticsearch restart'
-    vm.shell! 'root', 'service postgresql restart'
+    shell! 'root', 'service elasticsearch restart'
+    shell! 'root', 'service postgresql restart'
   end
 end
