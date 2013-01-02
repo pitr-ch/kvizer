@@ -26,7 +26,15 @@ Kvizer is a garble of "Katello virtualizer"
 
 All machines have access to outside world via NAT network. They are also placed on a private network created by Kvizer which is used to ssh connections.
 
-*TODO*
+*TODO* more documentation
+
+## Shared folders
+
+There are three shared folders: `redhat`, `remote_bin` and `support`. 
+
+- `redhat` for git repositories with projects you would like to share with a virtual machine. 
+- `remote_bin` is added to PATH on every machine so needed commands can be easily added to all kvizer virtual machines.
+- `support` is used for support files. E.g. there is `.bash_profile` used by all kvizer virtual machines.
 
 # Installation
 
