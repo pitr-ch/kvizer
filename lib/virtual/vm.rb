@@ -238,7 +238,7 @@ class Virtual
     end
 
     def run_job(job, options = { })
-      raise ArgumentError, "not a job #{job.inspect}" unless job.kind_of? Virtual::Jobs2::Job
+      raise ArgumentError, "not a job #{job.inspect}" unless job.kind_of? Virtual::Jobs::Job
       job.run self, options
     end
 

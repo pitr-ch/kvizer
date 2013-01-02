@@ -1,5 +1,5 @@
 class Virtual
-  module Jobs2
+  module Jobs
     class Job
       include Shortcuts
       attr_reader :virtual, :vm, :logger, :name, :offline_job, :online_job, :options

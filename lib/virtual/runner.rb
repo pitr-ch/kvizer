@@ -193,7 +193,7 @@ class Virtual
     end
 
     def rebuild(vm_name, start_job_name, finish_job_name, collection_name = :base_jobs, job_options = { })
-      collection = Virtual::Jobs2::Collection.new_by_names virtual, *virtual.config.send(collection_name)
+      collection = Virtual::Jobs::Collection.new_by_names virtual, *virtual.config.send(collection_name)
       job = collection[start_job_name] rescue Trollop::die(:job, "could not find job with name '#{start_job_name}'")
 
       last_job = collection[finish_job_name] rescue nil

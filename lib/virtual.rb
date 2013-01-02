@@ -71,7 +71,7 @@ class Virtual
   def job_definitions
     me = self
 
-    @jobs_definitions ||= Jobs2::DSL.new self do
+    @jobs_definitions ||= Jobs::DSL.new self do
       path = "#{me.root}/jobs.rb"
       instance_eval File.read(path), path
     end.jobs
