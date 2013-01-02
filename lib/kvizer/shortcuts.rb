@@ -1,11 +1,11 @@
-class Virtual
+class Kvizer
   module Shortcuts
     def host
-      virtual.host
+      kvizer.host
     end
 
     def config
-      virtual.config
+      kvizer.config
     end
   end
 end

@@ -1,6 +1,6 @@
 require 'yaml'
 
-class Virtual
+class Kvizer
 
   # Hash like container for configuration
   # @example allows access by method

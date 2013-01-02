@@ -10,19 +10,19 @@ lib_path = File.expand_path(File.join(File.dirname(__FILE__)))
 $: << lib_path unless $:.include? lib_path
 
 
-class Virtual
+class Kvizer
   ShellOutResult = Struct.new(:success, :out, :err)
   class CommandFailed < StandardError
   end
 
-  require 'virtual/shortcuts'
-  require 'virtual/config'
-  require 'virtual/vm'
-  require 'virtual/info_parser'
-  require 'virtual/host'
-  require 'virtual/logging'
-  require 'virtual/jobs'
-  require 'virtual/image_builder'
+  require 'kvizer/shortcuts'
+  require 'kvizer/config'
+  require 'kvizer/vm'
+  require 'kvizer/info_parser'
+  require 'kvizer/host'
+  require 'kvizer/logging'
+  require 'kvizer/jobs'
+  require 'kvizer/image_builder'
 
   attr_reader :logger, :info, :host, :logging
 
@@ -61,7 +61,7 @@ class Virtual
   end
 
   def to_s
-    "Virtual[#{vms.map(&:to_s).join(', ')}]"
+    "Kvizer[#{vms.map(&:to_s).join(', ')}]"
   end
 
   def root

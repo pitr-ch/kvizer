@@ -1,4 +1,4 @@
-class Virtual
+class Kvizer
   class VM
     class LinePrinter
       def initialize(&printer)
@@ -16,20 +16,20 @@ class Virtual
     end
 
     include Shortcuts
-    attr_reader :virtual, :name, :logger
+    attr_reader :kvizer, :name, :logger
 
-    def initialize(virtual, name)
-      @virtual, @name  = virtual, name
-      @logger          = virtual.logging[name]
+    def initialize(kvizer, name)
+      @kvizer, @name  = kvizer, name
+      @logger          = kvizer.logging[name]
       @ssh_connections = { }
     end
 
     def ip
-      virtual.info.attributes[name][:ip]
+      kvizer.info.attributes[name][:ip]
     end
 
     def mac
-      virtual.info.attributes[name][:mac]
+      kvizer.info.attributes[name][:mac]
     end
 
     def shell(user, cmd, options = { })
@@ -96,7 +96,7 @@ class Virtual
     def wait_for(status, timeout = nil)
       start = Time.now
       loop do
-        virtual.info.reload_attributes
+        kvizer.info.reload_attributes
         current = self.status
         return true if current == status
         logger.info "Waiting for: #{status}, now is: #{current}"
@@ -113,16 +113,16 @@ class Virtual
     def clone_vm(name, snapshot)
       host.shell! "VBoxManage clonevm \"#{self.name}\" --snapshot \"#{snapshot}\" --mode machine " +
                       "--options link --name \"#{name}\" --register"
-      virtual.info.reload
-      virtual.vms(true)
-      cloned_vm = virtual.vm name
+      kvizer.info.reload
+      kvizer.vms(true)
+      cloned_vm = kvizer.vm name
       cloned_vm.take_snapshot snapshot
     end
 
     def delete
       host.shell! "VBoxManage unregistervm \"#{name}\" --delete"
-      virtual.info.reload
-      virtual.vms(true)
+      kvizer.info.reload
+      kvizer.vms(true)
     end
 
     def set_hostname
@@ -213,7 +213,7 @@ class Virtual
     end
 
     def to_s
-      "#<Virtual::VM #{name} ip:#{ip.inspect} mac:#{mac.inspect}>"
+      "#<Kvizer::VM #{name} ip:#{ip.inspect} mac:#{mac.inspect}>"
     end
 
     def setup_private_network
@@ -221,16 +221,21 @@ class Virtual
       unless mac
         logger.info "Setting up network"
         host.shell! "VBoxManage modifyvm \"#{name}\" --nic2 hostonly --hostonlyadapter2 #{config.hostonly.name}"
-        virtual.info.reload
+        kvizer.info.reload
       else
         true
       end
     end
 
+    def setup_resources(ram_megabytes, cpus)
+      raise if running?
+      host.shell! "VBoxManage modifyvm \"#{name}\" --cpus #{cpus} --memory #{ram_megabytes}"
+    end
+
     def setup_shared_folders
       raise if running?
       config.shared_folders.each do |name, path|
-        path = File.expand_path path, virtual.root
+        path = File.expand_path path, kvizer.root
         host.shell "VBoxManage sharedfolder remove \"#{self.name}\" --name \"#{name}\""
         host.shell! "VBoxManage sharedfolder add \"#{self.name}\" --name \"#{name}\" --hostpath \"#{path}\" " +
                         "--automount"
@@ -238,7 +243,7 @@ class Virtual
     end
 
     def run_job(job, options = { })
-      raise ArgumentError, "not a job #{job.inspect}" unless job.kind_of? Virtual::Jobs::Job
+      raise ArgumentError, "not a job #{job.inspect}" unless job.kind_of? Kvizer::Jobs::Job
       job.run self, options
     end
 

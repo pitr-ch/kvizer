@@ -1,13 +1,13 @@
-class Virtual
+class Kvizer
   class ImageBuilder
     include Shortcuts
 
-    attr_reader :virtual, :vm, :collection, :logger
-    def initialize(virtual, vm, collection)
-      @virtual    = virtual
+    attr_reader :kvizer, :vm, :collection, :logger
+    def initialize(kvizer, vm, collection)
+      @kvizer     = kvizer
       @vm         = vm
       @collection = collection
-      @logger     = virtual.logging["image-base"]
+      @logger     = kvizer.logging["image-base"]
     end
 
     def rebuild(job_name, last_job = nil, options = { })

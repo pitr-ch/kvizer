@@ -1,11 +1,11 @@
-class Virtual
+class Kvizer
   class Logging
-    attr_reader :virtual, :outputter, :formatter
+    attr_reader :kvizer, :outputter, :formatter
 
-    def initialize(virtual, options = { })
-      @virtual   = virtual
+    def initialize(kvizer, options = { })
+      @kvizer    = kvizer
       @formatter = options[:formatter] || ColorFormatter.new(
-          :pattern => options[:pattern] || '%5l %d %22c: %m',
+          :pattern      => options[:pattern] || '%5l %d %22c: %m',
           :date_pattern => '%H:%M:%S')
       @outputter = options[:outputter] || default_outputter
     end
@@ -21,14 +21,14 @@ class Virtual
     private
 
     def default_outputter
-      outputter = if virtual.config.logger.output == 'stdout'
+      outputter = if kvizer.config.logger.output == 'stdout'
                     Log4r::Outputter.stdout
                   else
-                    Log4r::RollingFileOutputter.new :filename => virtual.config.logger.output
+                    Log4r::RollingFileOutputter.new :filename => kvizer.config.logger.output
                   end
 
       outputter.formatter = formatter
-      outputter.level = virtual.config.logger.level
+      outputter.level     = kvizer.config.logger.level
       outputter
     end
   end
@@ -47,14 +47,14 @@ class Virtual
     # later we'll probably add .bright or something, that's reason for case
     def colorize(string, level)
       case level
-        when 1
-          string.color(:yellow)
-        when 2
-          string.color(:cyan)
-        when 3
-          string.color(:magenta)
-        when 4
-          string.color(:red)
+      when 1
+        string.color(:yellow)
+      when 2
+        string.color(:cyan)
+      when 3
+        string.color(:magenta)
+      when 4
+        string.color(:red)
       end
     end
 

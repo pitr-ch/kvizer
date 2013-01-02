@@ -1,7 +1,7 @@
 require 'trollop'
 require 'rainbow'
 
-class Virtual
+class Kvizer
   class Runner
 
     class Command
@@ -31,8 +31,8 @@ class Virtual
       @commands[name] = Command.new name, &define
     end
 
-    def virtual
-      @virtual ||= Virtual.new
+    def kvizer
+      @kvizer ||= Kvizer.new
     end
 
     def shift
@@ -44,7 +44,7 @@ class Virtual
       @global_options = Trollop::options do
         banner "Utility to manage virtual machines for Katello development"
         banner "Subcommands are: #{sub_commands.join(' ')}"
-        banner "To show help of a subcommand use: virtual <subcommand> --help "
+        banner "To show help of a subcommand use: kvizer <subcommand> --help "
         stop_on sub_commands
       end
 
@@ -63,7 +63,7 @@ class Virtual
     private
 
     def get_vm
-      virtual.vm(@options[:vm]).tap { |vm| Trollop::die :vm, "could not find VM" unless vm }
+      kvizer.vm(@options[:vm]).tap { |vm| Trollop::die :vm, "could not find VM" unless vm }
     end
 
     def define_commands
@@ -72,16 +72,16 @@ class Virtual
         options.merge! :default => default if default
         o.opt :vm, "Virtual Machine name", options
       end
-      virtual   = self.virtual
+      kvizer   = self.kvizer
 
       command 'info' do
         options { banner 'Displays information about vms.' }
-        run { puts virtual.info.attributes.to_yaml }
+        run { puts kvizer.info.attributes.to_yaml }
       end
 
       command 'pry' do
         options { banner 'Run pry session.' }
-        run { virtual.pry }
+        run { kvizer.pry }
       end
 
       command 'run' do
@@ -136,7 +136,7 @@ class Virtual
         options do
           banner 'Build a machine by running job collection'
           opt :start_job, "Starting job name", :short => "-s", :type => :string
-          vm_option.call self, virtual.config.katello_base
+          vm_option.call self, kvizer.config.katello_base
           opt :finish_job, "Finish job name", :short => '-f', :type => :string
           opt :collection, "Which job collection should be used", :short => '-c', :type => :string
         end
@@ -155,10 +155,10 @@ class Virtual
           vm_option.call self
         end
         run do
-          job = virtual.job_definitions[@options[:job]]
+          job = kvizer.job_definitions[@options[:job]]
           unless job
             Trollop.die :job, "'#{@options[:job]}' could not find a job, avaliable:\n  " +
-                "#{virtual.job_definitions.keys.join("\n  ")}"
+                "#{kvizer.job_definitions.keys.join("\n  ")}"
           end
           get_vm.run_job job, eval(@options[:options])
         end
@@ -169,7 +169,7 @@ class Virtual
           banner 'Clone a virtual machine'
           opt :name, "Name of the new machine", :short => '-n', :type => :string
           opt :snapshot, "Name of a source snapshot", :short => '-s', :type => :string
-          vm_option.call self, virtual.config.katello_base
+          vm_option.call self, kvizer.config.katello_base
         end
         run { clone_vm get_vm, @options[:name], @options[:snapshot] }
       end
@@ -182,9 +182,9 @@ class Virtual
           opt :name, "Machine name", :short => '-n', :type => :string
         end
         run do
-          branch  = @options[:branch] || virtual.config.job_options.package2.branch
+          branch  = @options[:branch] || kvizer.config.job_options.package2.branch
           vm_name = @options[:name] || "ci-#{branch}"
-          clone_vm virtual.vm(virtual.config.katello_base), vm_name, 'install-packaging'
+          clone_vm kvizer.vm(kvizer.config.katello_base), vm_name, 'install-packaging'
           rebuild vm_name, 'package2', 'system-test', :build_jobs,
                   :package2 => { :source => @options[:git], :branch => branch }
         end
@@ -193,7 +193,7 @@ class Virtual
     end
 
     def rebuild(vm_name, start_job_name, finish_job_name, collection_name = :base_jobs, job_options = { })
-      collection = Virtual::Jobs::Collection.new_by_names virtual, *virtual.config.send(collection_name)
+      collection = Kvizer::Jobs::Collection.new_by_names kvizer, *kvizer.config.send(collection_name)
       job = collection[start_job_name] rescue Trollop::die(:job, "could not find job with name '#{start_job_name}'")
 
       last_job = collection[finish_job_name] rescue nil
@@ -201,7 +201,7 @@ class Virtual
         Trollop::die(:finish_job, "could not find job with name'#{finish_job_name}'")
       end
 
-      kb = Virtual::ImageBuilder.new virtual, virtual.vm(vm_name), collection
+      kb = Kvizer::ImageBuilder.new kvizer, kvizer.vm(vm_name), collection
       kb.rebuild job.name, last_job, job_options
     end
 
