@@ -134,7 +134,7 @@ job 'install-packaging' do
   end
 end
 
-job 'package2' do
+job 'package2' do # TODO rename to package
   online do
     shell! 'user', "git clone #{options[:source]} katello-build-source"
     shell! 'user', "cd katello-build-source; git checkout #{options[:branch]}"

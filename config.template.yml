@@ -21,7 +21,8 @@
     :upper_ip: 192.168.25.110
 
 :logger:
-  :output: "stdout"
+  :output: "kvizer.log"
+  :print_to_stdout: true
   :level: 0
 
 # define which directories to mount on a virtual machine
