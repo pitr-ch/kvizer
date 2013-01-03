@@ -1,11 +1,11 @@
-class Virtual
+class Kvizer
   class Host
     include Shortcuts
-    attr_reader :virtual, :logger
+    attr_reader :kvizer, :logger
 
-    def initialize(virtual)
-      @virtual = virtual
-      @logger  = virtual.logging['host']
+    def initialize(kvizer)
+      @kvizer = kvizer
+      @logger = kvizer.logging['host']
     end
 
     def shell(cmd, options = { })

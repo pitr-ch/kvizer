@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# path to Ruby you want to use, 1.9.3 is preferred
+ruby_path=/Users/pitr/.rbenv/versions/1.9.3-p286
+# path to kvizer
+kvizer_path=/Users/pitr/Workspace/redhat/kvizer
+
+
+ruby=$ruby_path/bin/ruby
+bundler=$ruby_path/bin/bundle
+kvizer_launcher=$kvizer_path/bin/kvizer.rb
+
+# run kvizer
+BUNDLE_GEMFILE=$kvizer_path/Gemfile $bundler exec $ruby $kvizer_launcher $@

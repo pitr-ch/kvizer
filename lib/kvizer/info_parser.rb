@@ -1,10 +1,10 @@
-class Virtual
+class Kvizer
   class InfoParser
     include Shortcuts
-    attr_reader :virtual, :raw_attributes, :attributes
+    attr_reader :kvizer, :raw_attributes, :attributes
 
-    def initialize(virtual)
-      @virtual = virtual
+    def initialize(kvizer)
+      @kvizer = kvizer
       reload
     end
 
@@ -17,7 +17,7 @@ class Virtual
       reload_raw_attributes system_strings
       reload_attributes
 
-      #virtual.logger.debug "Attributes:\n" + attributes.pretty_inspect
+      #kvizer.logger.debug "Attributes:\n" + attributes.pretty_inspect
       self
     end
 

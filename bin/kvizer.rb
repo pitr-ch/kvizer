@@ -3,7 +3,7 @@
 lib_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib'))
 $: << lib_path unless $:.include? lib_path
 
-require 'virtual'
-require 'virtual/runner'
+require 'kvizer'
+require 'kvizer/runner'
 
-Virtual::Runner.new.parse.run
+Kvizer::Runner.new.parse.run

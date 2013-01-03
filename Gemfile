@@ -1,8 +1,8 @@
 source :rubygems
 
 gem 'rake'
-gem 'activesupport', '3.2.1'
-gem 'i18n'
+#gem 'activesupport', '3.2.1'
+#gem 'i18n'
 gem 'popen4'
 gem 'trollop'
 gem 'log4r'
