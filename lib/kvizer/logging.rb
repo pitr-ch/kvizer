@@ -1,32 +1,49 @@
 class Kvizer
-  class Logging
-    class ColorFormatter < Log4r::PatternFormatter
+  class Logging # TODO command and pid
+    class Formatter < Log4r::Formatter
       def initialize(options = { })
-        super
+        @time_format = options[:date_pattern] || '%H:%M:%S'
+        @pattern     = options[:pattern] || "%s %s %20s: %s\n"
+      end
 
-        original_method = self.method(:format)
-        singleton_class.send :define_method, :format do |event|
-          string = original_method.call(event)
-          colorize(string[0..(level_size-1)], event.level) + string[level_size..-1]
-        end
+      def format(event)
+        sprintf @pattern, level(event), time, event.name, message(event)
+      end
+
+      def time
+        Time.now.strftime @time_format
+      end
+
+      def level(event)
+        Log4r::LNAMES[event.level].rjust 5
+      end
+
+      def message(event)
+        event.data
+      end
+    end
+
+    class ColoredFormatter < Formatter
+      def level(event)
+        colorize super, event.level
+      end
+
+      def message(event)
+        colorize super, event.level
       end
 
       # later we'll probably add .bright or something, that's reason for case
       def colorize(string, level)
         case level
         when 1
-          string.color(:yellow)
+          string
         when 2
-          string.color(:cyan)
+          string.color(:green)
         when 3
-          string.color(:magenta)
+          string.color(:yellow)
         when 4
           string.color(:red)
         end
-      end
-
-      def level_size
-        pattern =~ /(%(\d+)l)/ ? $2.to_i : 0
       end
     end
 
@@ -50,9 +67,7 @@ class Kvizer
     private
 
     def new_formatter(colored = false)
-      (colored ? ColorFormatter : Log4r::PatternFormatter).new(
-          :pattern      => '%5l %d %22c: %m',
-          :date_pattern => '%H:%M:%S')
+      (colored ? ColoredFormatter : Formatter).new
     end
 
     def stdout_outputter

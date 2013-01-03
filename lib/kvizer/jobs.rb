@@ -25,12 +25,12 @@ class Kvizer
         running vm, options do
           if offline_job
             vm.stop_and_wait
-            logger.info "running offline job".color(:yellow).bright
+            logger.info "running offline job"
             instance_eval &offline_job
           end
           if online_job
             vm.run_and_wait
-            logger.info "running online job".color(:yellow).bright
+            logger.info "running online job"
             instance_eval &online_job
           end
         end
@@ -94,7 +94,7 @@ class Kvizer
       end
 
       def job(name, template = nil, &definition)
-        raise ArgumentError, "name '#{name}' already taken".color(:red) if @jobs[name]
+        raise ArgumentError, "name '#{name}' already taken" if @jobs[name]
         @jobs[name] = if template
                         @jobs[template].clone(name)
                       else
@@ -108,7 +108,7 @@ class Kvizer
 
       def self.new_by_names(kvizer, *job_names)
         new kvizer, *job_names.map { |name| kvizer.job_definitions[name] or
-            raise "unknown job '#{name}'".color(:red) }
+            raise "unknown job '#{name}'" }
       end
 
       def initialize(kvizer, *jobs)
@@ -119,7 +119,7 @@ class Kvizer
 
       def [](name)
         @map[name] or
-            raise ArgumentError, "job with name '#{name}' was not found, available: #{@map.keys.join(', ')}".color(:red)
+            raise ArgumentError, "job with name '#{name}' was not found, available: #{@map.keys.join(', ')}"
       end
 
       def job_index(job)
