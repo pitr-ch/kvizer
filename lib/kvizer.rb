@@ -35,10 +35,12 @@ class Kvizer
   end
 
   def vm(part_name)
-    regexp = part_name.kind_of?(String) ? /#{part_name}/ : part_name
-    vms.select { |vm| vm.name =~ regexp }.
-        tap { |arr| raise "ambiguous vm name #{part_name}" if arr.size > 1 }.
-        first
+    vms.find { |vm| vm.name == part_name } || begin
+      regexp = part_name.kind_of?(String) ? /#{part_name}/ : part_name
+      vms.select { |vm| vm.name =~ regexp }.
+          tap { |arr| raise "ambiguous vm name #{part_name}" if arr.size > 1 }.
+          first
+    end
   end
 
   def vm!(part_name)
