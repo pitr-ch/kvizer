@@ -70,9 +70,12 @@ class Kvizer
       vm_option = lambda do |o, default = nil|
         options = { :short => "-m", :type => :string }
         options.merge! :default => default if default
+        options.merge! :required => true unless default
+
         o.opt :vm, "Virtual Machine name", options
       end
-      kvizer   = self.kvizer
+
+      kvizer = self.kvizer
 
       command 'info' do
         options { banner 'Displays information about vms.' }
@@ -135,23 +138,23 @@ class Kvizer
       command 'build' do
         options do
           banner 'Build a machine by running job collection'
-          opt :start_job, "Starting job name", :short => "-s", :type => :string
+          opt :start_job, 'Starting job name', :short => '-s', :type => :string, :required => true
           vm_option.call self, kvizer.config.katello_base
-          opt :finish_job, "Finish job name", :short => '-f', :type => :string
-          opt :collection, "Which job collection should be used", :short => '-c', :type => :string
+          opt :finish_job, 'Finish job name', :short => '-f', :type => :string
+          opt :collection, 'Which job collection should be used',
+              :short => '-c', :type => :string, :default => 'base_jobs'
         end
         run do
-          collection_name = @options[:collection] ? @options[:collection].to_sym : :base_job
-          rebuild @options[:vm], @options[:start_job], @options[:finish_job], collection_name
+          rebuild @options[:vm], @options[:start_job], @options[:finish_job], @options[:collection].to_sym
         end
       end
 
       command 'execute' do
         options do
           banner 'Execute single job on a machine'
-          opt :job, "Job name", :short => "-j", :type => :string
-          opt :options, "Job options string value is evaluated by Ruby to get the Hash",
-              :short => "-o", :type => :string
+          opt :job, 'Job name', :short => '-j', :type => :string, :required => true
+          opt :options, 'Job options string value is evaluated by Ruby to get the Hash',
+              :short => '-o', :type => :string
           vm_option.call self
         end
         run do
@@ -167,8 +170,8 @@ class Kvizer
       command 'clone' do
         options do
           banner 'Clone a virtual machine'
-          opt :name, "Name of the new machine", :short => '-n', :type => :string
-          opt :snapshot, "Name of a source snapshot", :short => '-s', :type => :string
+          opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
+          opt :snapshot, "Name of a source snapshot", :short => '-s', :type => :string, :required => true
           vm_option.call self, kvizer.config.katello_base
         end
         run { clone_vm get_vm, @options[:name], @options[:snapshot] }
@@ -177,8 +180,10 @@ class Kvizer
       command 'ci' do
         options do
           banner 'From a git repository: build rpms, install them, run katello-configuration and run system tests'
-          opt :git, "url/path to git repository", :short => '-g', :type => :string
-          opt :branch, "branch to checkout", :short => '-b', :type => :string
+          opt :git, "url/path to git repository",
+              :short => '-g', :type => :string, :default => kvizer.config.job_options.package2.source
+          opt :branch, "branch to checkout",
+              :short => '-b', :type => :string, :default => kvizer.config.job_options.package2.branch
           opt :name, "Machine name", :short => '-n', :type => :string
         end
         run do
