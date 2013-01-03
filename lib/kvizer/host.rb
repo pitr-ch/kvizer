@@ -9,7 +9,7 @@ class Kvizer
     end
 
     def shell(cmd, options = { })
-      logger.debug "shell$ #{cmd}"
+      logger.debug "sh$ #{cmd}"
       begin
         stdout, stderr = "", ""
         status         = POpen4::popen4(cmd) do |out, err|
@@ -26,7 +26,7 @@ class Kvizer
 
     def shell!(cmd, options = { })
       result = shell cmd, options
-      raise "cmd failed: #{cmd}\nerr:\n#{result.err}".color(:red) unless result.success
+      raise "cmd failed: #{cmd}\nerr:\n#{result.err}" unless result.success
       result
     end
 
