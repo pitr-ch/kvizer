@@ -19,7 +19,7 @@ class Kvizer
     attr_reader :kvizer, :name, :logger
 
     def initialize(kvizer, name)
-      @kvizer, @name  = kvizer, name
+      @kvizer, @name   = kvizer, name
       @logger          = kvizer.logging[name]
       @ssh_connections = { }
     end
@@ -127,7 +127,7 @@ class Kvizer
 
     def set_hostname
       raise unless running?
-      shell 'root', "hostname #{name}"
+      shell 'root', "hostname #{name.gsub(/[^-a-zA-Z0-9.]/, '-')}"
     end
 
     def status
