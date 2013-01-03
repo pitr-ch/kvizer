@@ -12,8 +12,13 @@ job 'base' do
   end
 end
 
+# TODO rename job
 job 'install-htop' do
-  online { yum_install "htop" }
+  online do
+    yum_install "htop"
+    yum_install "multitail"
+    yum_install "ack"
+  end
 end
 
 job 'install-katello-nightly' do
