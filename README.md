@@ -40,7 +40,7 @@ There are three shared folders: `redhat`, `remote_bin` and `support`.
 
 ## Dependencies
 
-- latest VirtualBox 4.2.4
+- latest VirtualBox > 4.2.4
 - arp-scan
 
 ## Create katello base image
@@ -68,6 +68,10 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 - configure Kvizer with `config.yml` by copying a template `config.template.yml`, follow comments inside
 - add kvizer/bin to your PATH
 - run `kvizer info` to test it, you should see list of your machines
+
+### Setting up koji
+
+*TODO*
  
 ## Creating base image
 

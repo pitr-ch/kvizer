@@ -79,3 +79,4 @@
   :package2:
     :source: /home/user/redhat/katello
     :branch: master
+    :use_koji: false
