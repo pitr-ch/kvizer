@@ -52,16 +52,6 @@ class Kvizer
     @vms ||= info.attributes.map { |name, _| VM.new(self, name) }
   end
 
-  def setup_development_vms
-    # TODO add machine to host
-    config.development_vms.each do |name, config|
-      if clone = vm(name) rescue nil
-        clone.delete
-      end
-      vm(config.template).clone_vm(name, config.snapshot)
-    end
-  end
-
   def to_s
     "Kvizer[#{vms.map(&:to_s).join(', ')}]"
   end
@@ -74,8 +64,10 @@ class Kvizer
     me = self
 
     @jobs_definitions ||= Jobs::DSL.new self do
-      path = "#{me.root}/jobs.rb"
-      instance_eval File.read(path), path
+      me.config.jobs_paths.each do |path|
+        path = File.expand_path(path, me.root)
+        instance_eval File.read(path), path
+      end
     end.jobs
   end
 

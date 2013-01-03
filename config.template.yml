@@ -9,6 +9,15 @@
 # run virtual machines headless?
 :headless: true
 
+:jobs_paths:
+- jobs.rb
+
+:commands_paths:
+- commands.rb
+
+# additional config file which is deep merged with this one default
+:config_overide:
+
 # configuration of a private network for katello machines
 :hostonly:
   :name: vboxnet0
@@ -38,7 +47,7 @@
 # path to katello on the machine
 :katello_path: /home/user/redhat/katello
 
-:virtual_box_version: 4.2.4
+:virtual_box_version: 4.2.6
 
 # name of the katello base machine
 :katello_base: katello-base

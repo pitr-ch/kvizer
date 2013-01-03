@@ -126,6 +126,10 @@ class Kvizer
   end
 
   def config
-    @config ||= ConfigNode.new(YAML.load_file("#{root}/config.yml"))
+    @config ||=
+        ConfigNode.new(YAML.load_file("#{root}/config.yml")).tap do |config|
+          config.deep_merge! YAML.load_file(File.expand_path(config.config_overide, root)) if config.config_overide
+          pp config
+        end
   end
 end
