@@ -194,7 +194,7 @@ class Kvizer
 
     def stop_and_wait
       stop
-      wait_for(:stopped, 5*60) || power_off!
+      wait_for(:stopped, 10*60) || power_off!
     end
 
     def power_off!
