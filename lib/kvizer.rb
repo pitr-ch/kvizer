@@ -24,14 +24,12 @@ class Kvizer
   require 'kvizer/jobs'
   require 'kvizer/image_builder'
 
-  attr_reader :logger, :info, :host, :logging
+  attr_reader :logger, :host, :logging
 
   def initialize
     @logging = Logging.new(self)
     @logger  = logging['virtual']
     @host    = Host.new(self)
-
-    @info = InfoParser.new(self)
   end
 
   def vm(part_name)
@@ -41,6 +39,10 @@ class Kvizer
           tap { |arr| raise "ambiguous vm name #{part_name}" if arr.size > 1 }.
           first
     end
+  end
+
+  def info
+    @info ||= InfoParser.new(self)
   end
 
   def vm!(part_name)
