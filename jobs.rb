@@ -148,7 +148,7 @@ job 'package2' do # TODO rename to package
     yum_install "katello-repos-testing"
     yum_install "puppet" # workaround for missing puppet user when puppet is installed by yum-builddep
 
-    spec_dirs = %w(src cli katello-configure katello-utils repos selinux/katello-selinux scripts/system-test).reverse
+    spec_dirs = %w(src cli katello-configure katello-utils repos selinux/katello-selinux scripts/system-test)
     rpms      = spec_dirs.map { |dir| build_rpms dir }.flatten
 
     logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
