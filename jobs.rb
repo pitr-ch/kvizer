@@ -146,7 +146,7 @@ job 'package2' do # TODO rename to package
            # latest links to 1.2, use above variant when you encounter problems
            "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
     yum_install "katello-repos-testing"
-    yum_install "puppet" # FIXME workaround for missing puppet user when puppet is installed by yum-builddep
+    yum_install "puppet" # workaround for missing puppet user when puppet is installed by yum-builddep
 
     spec_dirs = %w(src cli katello-configure katello-utils repos selinux/katello-selinux scripts/system-test).reverse
     rpms      = spec_dirs.map { |dir| build_rpms dir }.flatten

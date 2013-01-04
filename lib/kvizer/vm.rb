@@ -73,16 +73,14 @@ class Kvizer
       result
     end
 
-    def ssh_connection(user, password = nil) # FIXME do better
-                                             # TODO ignore known hosts
-                                             # ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no petr@host
+    def ssh_connection(user, password = nil)
       @ssh_connections[user] ||= session = begin
         logger.debug "SSH connecting #{user}"
         Net::SSH.start(ip, user, :password => password, :paranoid => false)
       end
     end
 
-    def ssh_close # TODO do better
+    def ssh_close # TODO collect and close all ssh connections
       @ssh_connections.keys.each do |user|
         ssh = @ssh_connections.delete user
         ssh.close unless ssh.closed?
@@ -168,7 +166,7 @@ class Kvizer
         sleep 1
         host.shell! cmd
       end
-      sleep 5 # FIXME other commands fail after this when called immidietly
+      sleep 5 # other commands fail after this when called immidietly
     end
 
     def restore_snapshot(snapshot_name)
