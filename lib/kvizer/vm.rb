@@ -91,7 +91,7 @@ class Kvizer
       status == :running
     end
 
-    def wait_for(status, timeout = nil)
+    def wait_for(status, timeout = nil, interval = 5)
       start = Time.now
       loop do
         kvizer.info.reload_attributes
@@ -104,7 +104,7 @@ class Kvizer
           return false
         end
 
-        sleep 5
+        sleep interval
       end
     end
 
