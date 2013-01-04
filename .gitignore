@@ -3,3 +3,4 @@
 config.yml
 gems
 bin/kvizer
+support/koji/katello-config

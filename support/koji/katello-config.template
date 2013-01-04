@@ -16,8 +16,8 @@ topurl = http://koji.katello.org/
 
 ;configuration for SSL athentication
 
-;client certificate
-cert = ~/support/koji/pchalupa.pem
+;client certificate, add and edit path
+cert = ~/support/koji/your_key.pem
 
 ;certificate of the CA that issued the client certificate
 ca = ~/support/koji/katello-ca.cert

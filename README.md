@@ -9,11 +9,11 @@ Kvizer is a garble of "Katello virtualizer"
 - virtual machines management, commands: run, stop, power-off, delete, clone
 - automated creation of remote-enabled development machine from clean Fedora `kvizer build -s base`
 - connecting to machines `kvizer ssh -m <part of a VM name>`
-- automated CI `kvizer ci --git <git repo> --branch <a branch>` which does:
-  - build katello rpms from given git and branch
-  - install these rpms
-  - runs katello-configure
-  - run system tests
+- runs **complete release tests** with one command `kvizer ci --git <git repo> --branch <a branch>` which does:
+  - **build** katello rpms from given git and branch locally or in **koji**
+  - **install** these rpms
+  - runs **katello-configure**
+  - run **system-tests**
 - machine hostnames are same as VM names
 - auto-mounting of shared directories
   - `kvizer/remote_bin` for shared command line tools (commands are accessible on guest, the directory is added to path on guest) 
@@ -71,7 +71,9 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 
 ### Setting up koji
 
-*TODO*
+- copy `support/koji/katello-config.template` to `support/koji/katello-config`
+- copy your certificate for koji to `support/koji/`, e.g. `support/koji/pchalupa.pem`
+- update path to this certificate in `support/koji/katello-config`
  
 ## Creating base image
 
@@ -80,6 +82,7 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 ## Run CI
 
 - run `kvizer ci -b your_branch` to test if it builds, configures and runs system-tests successfully
+- run `kvizer ci --help` for more information
 
 
 
