@@ -62,8 +62,7 @@
 - setup-shared-folders
 - install-htop
 - install-packaging
-# note you can use install-katello if nightly is broken, but it can be outdated
-- install-katello-nightly
+- install-katello
 - configure-katello
 - turnoff-services
 - relax-security
@@ -74,9 +73,13 @@
 - reconfigure-katello
 - system-test
 
-# default options of jobs
+# default job options
 :job_options:
   :package2:
     :source: /home/user/redhat/katello
     :branch: master
     :use_koji: false
+  :install-katello:
+    :latest: true
+    :release_version: "1.2"
+    :katello_repos: katello-repos-1.2.4-1.fc16.noarch.rpm
