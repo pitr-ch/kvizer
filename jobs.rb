@@ -145,45 +145,52 @@ job 'package2' do # TODO rename to package
     yum_install "katello-repos-testing"
     yum_install "puppet" # workaround for missing puppet user when puppet is installed by yum-builddep
 
+    store_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
+    shell! 'user', "mkdir -p #{store_dir}"
+
     spec_dirs = %w(src cli katello-configure katello-utils repos selinux/katello-selinux scripts/system-test)
-    rpms      = spec_dirs.map { |dir| build_rpms dir }.flatten
+
+    logger.info "building src.rpms"
+    src_rpms = spec_dirs.inject({ }) do |hash, dir|
+      result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=.fc16"
+      result.out =~ /^Wrote: (.*src\.rpm)$/
+      srpm_file = $1
+      shell! 'user', "cp #{srpm_file} #{store_dir}"
+      hash.update dir => srpm_file
+    end
+
+    rpms = if options[:use_koji]
+             logger.info "building rpms in Koji"
+             task_ids = spec_dirs.inject({ }) do |hash, dir|
+               result = shell! 'user',
+                               "koji -c ~/.koji/katello-config build --scratch katello-nightly-fedora16 #{src_rpms[dir]}"
+               hash.update dir => /^Created task: (\d+)$/.match(result.out)[1]
+             end
+
+             logger.info "waiting until rpms are finished"
+             shell! 'user', "koji -c ~/.koji/katello-config watch-task #{task_ids.values.join ' '}"
+
+             logger.info "collecting the rpms"
+             task_ids.map do |dir, task_id|
+               result = shell! 'user',
+                               "cd #{store_dir}; koji -c ~/.koji/katello-config download-scratch-build #{task_id}"
+               result.out.split("\n").map { |line| store_dir + /^Downloading \[\d+\/\d+\]: (.+)$/.match(line)[1] }
+             end
+           else
+             logger.info "building rpms locally"
+             spec_dirs.map do |dir|
+               shell! 'root', "yum-builddep -y #{src_rpms[dir]}"
+               result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.fc16"
+               result.out =~ /Successfully built: (.*)\Z/
+               $1.split(/\s/).tap do |rpms|
+                 shell! 'user', "cp #{rpms.join(' ')} #{store_dir}"
+                 logger.info "rpms: #{rpms.join(' ')}"
+               end
+             end
+           end.flatten
 
     logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
 
-    install_rpms rpms
-  end
-
-  # @return [Array(String)] of successfully built rpms
-  def self.build_rpms(dir)
-    logger.info "building '#{dir}'"
-    result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=.fc16"
-    result.out =~ /^Wrote: (.*src\.rpm)$/
-    srpm_file = $1
-
-    if options[:use_koji]
-      result  = shell!('user', "koji -c ~/.koji/katello-config build --scratch katello-nightly-fedora16 #{srpm_file}")
-      task_id = /^Created task: (\d+)$/.match(result.out)[1]
-
-      shell! 'user', "koji -c ~/.koji/katello-config watch-task #{task_id}"
-
-      shell! 'user', 'mkdir -p /tmp/koji'
-      result = shell! 'user', "cd /tmp/koji; koji -c ~/.koji/katello-config download-scratch-build #{task_id}"
-      result.out.split("\n").map { |line| '/tmp/koji/' + /^Downloading \[\d+\/\d+\]: (.+)$/.match(line)[1] }
-      # parse Created task: 15874
-      # download built rpms to /tmp/koji/
-      # cd /tmp/koji; koji -c ~/.koji/katello-config download-scratch-build 15854
-      # parse rpms from
-      #   Downloading [1/2]: katello-configure-1.3.1-1.git.167.a0bb275.fc16.src.rpm
-      #   Downloading [2/2]: katello-configure-1.3.1-1.git.167.a0bb275.fc16.noarch.rpm
-    else
-      shell! 'root', "yum-builddep -y #{srpm_file}"
-      result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.fc16"
-      result.out =~ /Successfully built: (.*)\Z/
-      $1.split(/\s/).tap { |rpms| logger.info "rpms: #{rpms.join(' ')}" }
-    end
-  end
-
-  def self.install_rpms(rpms)
     to_install = rpms.select { |rpm| rpm !~ /headpin|devel|src\.rpm/ }
     result     = shell 'root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"
     unless result.success
