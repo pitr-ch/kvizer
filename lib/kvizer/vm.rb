@@ -24,6 +24,10 @@ class Kvizer
       @ssh_connections = { }
     end
 
+    def safe_name
+      name.gsub(/[^-a-zA-Z0-9.]/, '-')
+    end
+
     def ip
       kvizer.info.attributes[name][:ip]
     end
@@ -125,7 +129,7 @@ class Kvizer
 
     def set_hostname
       raise unless running?
-      shell 'root', "hostname #{name.gsub(/[^-a-zA-Z0-9.]/, '-')}"
+      shell 'root', "hostname #{safe_name}"
     end
 
     def status
