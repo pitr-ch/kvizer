@@ -4,12 +4,14 @@ This little tool should help you with katello development. It makes virtual serv
 
 Kvizer is a garble of "Katello virtualizer"
 
+Bugs, planed enhancements, questions can be found on [github issues](https://github.com/pitr-ch/kvizer/issues).
+
 # Features
 
 - virtual machines management, commands: run, stop, power-off, delete, clone
 - automated creation of remote-enabled development machine from clean Fedora `kvizer build -s base`
 - connecting to machines `kvizer ssh -m <part of a VM name>`
-- runs **complete release tests** with one command `kvizer ci --git <git repo> --branch <a branch>` which does:
+- runs **complete test cycle** with one command `kvizer ci --git <git repo> --branch <a branch>` which does:
   - **build** katello rpms from given git and branch locally or in **koji**
   - **install** these rpms
   - runs **katello-configure**
@@ -26,7 +28,7 @@ Kvizer is a garble of "Katello virtualizer"
 
 All machines have access to outside world via NAT network. They are also placed on a private network created by Kvizer which is used to ssh connections.
 
-*TODO* more documentation
+*TODO* more documentation: jobs, collections, ... 
 
 ## Shared folders
 
@@ -48,7 +50,7 @@ There are three shared folders: `redhat`, `remote_bin` and `support`.
 First you must create a base Fedora 16 virtual server. This will serve as origin image for other clones which you'll use for development.
 
 - download image: `http://archive.fedoraproject.org/pub/fedora/linux/releases/16/Fedora/x86_64/iso/Fedora-16-x86_64-netinst.iso`
-- create virtual machine named 'katello-base' in virtual box
+- create virtual machine named 'clean-f16' in virtual box
 - note that for katello virtual machine you should allocate ~40GB of diskspace, 1.5GB of RAM and 2 CPU cores is also a good option
 - fill in these during installation
   - root password: katello 
@@ -74,14 +76,16 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 - copy `support/koji/katello-config.template` to `support/koji/katello-config`
 - copy your certificate for koji to `support/koji/`, e.g. `support/koji/pchalupa.pem`
 - update path to this certificate in `support/koji/katello-config`
+- now you can build in koji with kvizer from its machines
  
 ## Creating base image
 
-- run `kvizer build -s base`
+Run `kvizer build-base --vm clean-f16 --name katello-base` to create base development image from cleanly installed machine.
 
 ## Run CI
 
 - run `kvizer ci -b your_branch` to test if it builds, configures and runs system-tests successfully
+- to use Koji for RPM build add `--use-koji` option
 - run `kvizer ci --help` for more information
 
 

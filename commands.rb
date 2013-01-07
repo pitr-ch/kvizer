@@ -1,3 +1,5 @@
+# TODO remove die form these helper methods
+
 def self.rebuild(vm_name, start_job_name, finish_job_name, collection_name = :base_jobs, job_options = { })
   collection = Kvizer::Jobs::Collection.new_by_names kvizer, *kvizer.config.send(collection_name)
   job = collection[start_job_name] rescue Trollop::die(:job, "could not find job with name '#{start_job_name}'")
@@ -18,12 +20,12 @@ def self.clone_vm(vm, name, snapshot)
   vm.clone_vm(name, snapshot)
 end
 
-vm_option = lambda do |o, default = nil|
+vm_option = lambda do |o, description = nil, default = nil|
   options = { :short => "-m", :type => :string }
   options.merge! :default => default if default
   options.merge! :required => true unless default
 
-  o.opt :vm, "Virtual Machine name", options
+  o.opt :vm, description || 'Virtual Machine name', options
 end
 
 kvizer = self.kvizer
@@ -90,13 +92,24 @@ command 'build' do
   options do
     banner 'Build a machine by running job collection'
     opt :start_job, 'Starting job name', :short => '-s', :type => :string, :required => true
-    vm_option.call self, kvizer.config.katello_base
+    vm_option.call self, 'Run build on a machine with this name', kvizer.config.katello_base
     opt :finish_job, 'Finish job name', :short => '-f', :type => :string
     opt :collection, 'Which job collection should be used',
         :short => '-c', :type => :string, :default => 'base_jobs'
   end
   run do
     rebuild @options[:vm], @options[:start_job], @options[:finish_job], @options[:collection].to_sym
+  end
+end
+
+command 'build-base' do
+  options do
+    vm_option.call self, 'Name of a clean installation'
+    opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
+  end
+  run do
+    clone_vm(get_vm, @options[:name], 'clean installation')
+    rebuild @options[:name], 'base', nil, :base_jobs
   end
 end
 
@@ -114,7 +127,7 @@ command 'execute' do
       Trollop.die :job, "'#{@options[:job]}' could not find a job, avaliable:\n  " +
           "#{kvizer.job_definitions.keys.join("\n  ")}"
     end
-    get_vm.run_job job, eval(@options[:options])
+    get_vm.run_job job, @options[:options] ? eval(@options[:options]) : { }
   end
 end
 
@@ -123,7 +136,7 @@ command 'clone' do
     banner 'Clone a virtual machine'
     opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
     opt :snapshot, "Name of a source snapshot", :short => '-s', :type => :string, :required => true
-    vm_option.call self, kvizer.config.katello_base
+    vm_option.call self, nil, kvizer.config.katello_base
   end
   run { clone_vm get_vm, @options[:name], @options[:snapshot] }
 end
