@@ -30,7 +30,7 @@
     :upper_ip: 192.168.25.110
 
 :logger:
-  :output: "kvizer.log"
+  :output: logs
   :print_to_stdout: true
   :level: 0
 
