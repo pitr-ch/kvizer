@@ -28,7 +28,21 @@ Bugs, planed enhancements, questions can be found on [github issues](https://git
 
 All machines have access to outside world via NAT network. They are also placed on a private network created by Kvizer which is used to ssh connections.
 
-*TODO* more documentation: jobs, collections, ... 
+Kvizer uses as basic building blocks jobs which are defined in `jobs.rb` (other paths can be added in configuration). Jobs are organized into sequential collections which are used to build a development machine and to run a `ci` command.
+
+Typical VM workflow is:
+
+- clean-fedora16 
+  - snapshots: "clean installation"
+- katello-base 
+  - cloned from clean-fedora16 at "clean installation" snapshot
+  - used as a base for cloning other machines
+  - snapshots: clean installation, base, update, add-user, install-guest-additions, setup-shared-folders, install-htop, install-packaging, install-katello-nightly, configure-katello, turnoff-services, relax-security, setup-development"
+- katello-dev[\d] 
+  - cloned from katello-base at "setup-development" snapshot
+- ci-[a-branch-name]
+  - cloned from katello-base at "install-packaging" snapshot
+  - used for running complete test cycles
 
 ## Shared folders
 
