@@ -36,7 +36,7 @@ command 'info' do
 end
 
 command 'pry' do
-  options { banner 'Run pry session.' }
+  options { banner 'Run pry session inside Kvizer. Useful for debugging or to run fine grained commands.' }
   run { kvizer.pry }
 end
 
@@ -70,7 +70,7 @@ end
 
 command 'power-off' do
   options do
-    banner 'Power off a virtual machine.'
+    banner 'Power off a virtual machine immediately.'
     vm_option.call self
   end
   run { get_vm.power_off! }
@@ -78,7 +78,7 @@ end
 
 command 'ssh' do
   options do
-    banner 'SSH an user to a machine.'
+    banner 'SSH an user to a machine. Starts the machine if it`s not running.'
     opt :user, "User login", :short => "-u", :type => :string, :default => 'user'
     vm_option.call self
   end
@@ -88,9 +88,21 @@ command 'ssh' do
   end
 end
 
+command 'clone' do
+  options do
+    banner 'Clone a virtual machine.'
+    opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
+    opt :snapshot, "Name of a source snapshot", :short => '-s', :type => :string, :required => true
+    vm_option.call self, nil, kvizer.config.katello_base
+  end
+  run { clone_vm get_vm, @options[:name], @options[:snapshot] }
+end
+
 command 'build' do
   options do
-    banner 'Build a machine by running job collection'
+    banner "Build a machine by running job collection. It'll run jobs from --start_job to --finish_job " +
+               "(or the last one of option is not supplied) from --collection defined in configuration. " +
+               "'It'll create snapshots after each job."
     opt :start_job, 'Starting job name', :short => '-s', :type => :string, :required => true
     vm_option.call self, 'Run build on a machine with this name', kvizer.config.katello_base
     opt :finish_job, 'Finish job name', :short => '-f', :type => :string
@@ -104,6 +116,8 @@ end
 
 command 'build-base' do
   options do
+    banner "Creates base developing machine from vm with clean installation of a system. This image is then used" +
+               "for cloning development machines or to ru ci commands."
     vm_option.call self, 'Name of a clean installation'
     opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
   end
@@ -115,7 +129,7 @@ end
 
 command 'execute' do
   options do
-    banner 'Execute single job on a machine'
+    banner 'Execute single job on a machine without saving snapshot.'
     opt :job, 'Job name', :short => '-j', :type => :string, :required => true
     opt :options, 'Job options string value is evaluated by Ruby to get the Hash',
         :short => '-o', :type => :string
@@ -131,19 +145,10 @@ command 'execute' do
   end
 end
 
-command 'clone' do
-  options do
-    banner 'Clone a virtual machine'
-    opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
-    opt :snapshot, "Name of a source snapshot", :short => '-s', :type => :string, :required => true
-    vm_option.call self, nil, kvizer.config.katello_base
-  end
-  run { clone_vm get_vm, @options[:name], @options[:snapshot] }
-end
-
 command 'ci' do
   options do
-    banner 'From a git repository: build rpms, install them, run katello-configuration and run system tests'
+    banner 'It will build RPMs (locally or in Koji), install them, run katello-configuration and run system tests. ' +
+               'It uses --git to clone a source (from local or remote repository) and swithes to a --branch.'
     opt :git, "url/path to git repository",
         :short => '-g', :type => :string, :default => kvizer.config.job_options.package2.source
     opt :branch, "branch to checkout",
