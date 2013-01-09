@@ -25,6 +25,21 @@ class Kvizer
       attributes.keys
     end
 
+    def table
+      columns   = [-30, 15, 13]
+      format    = columns.map { |c| "%#{c}s" }.join('  ') + "\n"
+      delimiter = columns.map { |c| '-'*c.abs }.join('  ') + "\n"
+      head      = %w(name ip status)
+      data      = attributes.values.map do |attr|
+        { :name => attr[:name], :ip => attr[:ip], :status => kvizer.vm(attr[:name]).status }
+      end
+      delimiter + format % head + delimiter + data.sort do |a, b|
+        [a[:status].to_s, a[:name].to_s] <=> [b[:status].to_s, b[:name].to_s]
+      end.map do |attr|
+        format % [attr[:name], attr[:ip], attr[:status]]
+      end.join + delimiter
+    end
+
     def reload_raw_attributes(system_strings)
       @raw_attributes = system_strings.map do |system_string|
         attribute_string = system_string.split(/\n\n/, 2).first

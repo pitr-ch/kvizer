@@ -32,7 +32,7 @@ kvizer = self.kvizer
 
 command 'info' do
   options { banner 'Displays information about vms.' }
-  run { puts kvizer.info.attributes.to_yaml }
+  run { puts kvizer.info.table }
 end
 
 command 'pry' do
