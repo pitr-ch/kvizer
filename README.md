@@ -1,4 +1,6 @@
-# About
+# Kvizer
+
+## About
 
 This little tool should help you with katello development. It makes virtual machines configuration easy. It's basically a wrapper around virtual box with some useful tools.
 
@@ -6,7 +8,7 @@ Kvizer is a garble of "Katello virtualizer"
 
 Bugs, planed enhancements, questions can be found on [github issues](https://github.com/pitr-ch/kvizer/issues).
 
-# Features
+## Features
 
 - virtual machines management, commands: run, stop, power-off, delete, clone
 - automated creation of remote-enabled development machine from clean Fedora `kvizer build-base --vm clean-f16 --name katello-base`
@@ -24,13 +26,13 @@ Bugs, planed enhancements, questions can be found on [github issues](https://git
   - based on VirtualBox
 - its all Ruby
 
-# Architecture
+## Architecture
 
 All machines have access to outside world via NAT network. They are also placed on a private network created by Kvizer which is used to ssh connections.
 
 Kvizer uses as basic building blocks jobs which are defined in `jobs.rb` (other paths can be added in configuration). Jobs are organized into sequential collections which are used to build a development machine and to run a `ci` command.
 
-Typical VM workflow is:
+### Typical VM workflow is:
 
 - clean-fedora16 
   - snapshots: "clean installation"
@@ -44,7 +46,7 @@ Typical VM workflow is:
   - cloned from katello-base at "install-packaging" snapshot
   - used for running complete test cycles
 
-## Shared folders
+### Shared folders
 
 There are three shared folders: `redhat`, `remote_bin` and `support`. 
 
@@ -52,14 +54,14 @@ There are three shared folders: `redhat`, `remote_bin` and `support`.
 - `remote_bin` is added to PATH on every machine so needed commands can be easily added to all kvizer virtual machines.
 - `support` is used for support files. E.g. there is `.bash_profile` used by all kvizer virtual machines.
 
-# Installation
+## Installation
 
-## Dependencies
+### Dependencies
 
 - latest VirtualBox > 4.2.4
 - arp-scan
 
-## Create katello base image
+### Create katello base image
 
 First you must create a base Fedora 16 virtual server. This will serve as origin image for other clones which you'll use for development.
 
@@ -77,7 +79,7 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 - create a snapshot of you virtual machine named "clean installation"
 - install arp-scan on host (Kvizer actually uses this for detecting virtual machine ip address)
 
-## Prepare Kvizer
+### Prepare Kvizer
 
 - copy `bin/kvizer.template` to `bin/kvizer` and set your paths there, follow comments inside
 - run `bundle install --path gems`
@@ -85,14 +87,14 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 - add kvizer/bin to your PATH
 - run `kvizer info` to test it, you should see list of your machines
 
-### Setting up koji
+#### Setting up koji
 
 - copy `support/koji/katello-config.template` to `support/koji/katello-config`
 - copy your certificate for koji to `support/koji/`, e.g. `support/koji/pchalupa.pem`
 - update path to this certificate in `support/koji/katello-config`
 - now you can build in koji with kvizer from its machines
  
-## Creating base image
+### Creating base image
 
 Run `kvizer build-base --vm clean-f16 --name katello-base` to create base development image from cleanly installed machine.
 
