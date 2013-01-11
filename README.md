@@ -9,18 +9,18 @@ Bugs, planed enhancements, questions can be found on [github issues](https://git
 # Features
 
 - virtual machines management, commands: run, stop, power-off, delete, clone
-- automated creation of remote-enabled development machine from clean Fedora `kvizer build -s base`
+- automated creation of remote-enabled development machine from clean Fedora `kvizer build-base --vm clean-f16 --name katello-base`
 - connecting to machines `kvizer ssh -m <part of a VM name>`
-- runs **complete test cycle** with one command `kvizer ci --git <git repo> --branch <a branch>` which does:
-  - **build** katello rpms from given git and branch locally or in **koji**
-  - **install** these rpms
-  - runs **katello-configure**
-  - run **system-tests**
+- runs *complete test cycle* with one command `kvizer ci --git <git repo url/local> --branch <a branch>` which does:
+  - *build* katello rpms from given git and branch *locally* or in *Koji*
+  - *install* these rpms
+  - runs *katello-configure*
+  - run *system-tests*
 - machine hostnames are same as VM names
 - auto-mounting of shared directories
   - `kvizer/remote_bin` for shared command line tools (commands are accessible on guest, the directory is added to path on guest) 
-  - `kvizer/support` for other shared files
-- platform independent (*nix systems only)
+  - `kvizer/support` for builds and other shared files
+- platform independent-ish (*nix systems only)
   - based on VirtualBox
 - its all Ruby
 
