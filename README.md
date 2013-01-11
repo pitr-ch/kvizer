@@ -1,6 +1,6 @@
 # About
 
-This little tool should help you with katello development. It makes virtual server configuration easy. It's basically a wrapper around virtual box with some useful tools.
+This little tool should help you with katello development. It makes virtual machines configuration easy. It's basically a wrapper around virtual box with some useful tools.
 
 Kvizer is a garble of "Katello virtualizer"
 
@@ -95,6 +95,13 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 ## Creating base image
 
 Run `kvizer build-base --vm clean-f16 --name katello-base` to create base development image from cleanly installed machine.
+
+## Cloning a machine for development
+
+- Run `kvizer clone --vm a_base --name katello-dev --snapshot setup-development` to clone a machine for development. 
+- Run the machine `kvizer run --vm katello-dev`.
+- Setup Katello on a host machine to connect to the development machine (`kvizer info` will help you to find correct ip).
+- Now you can run Katello process locally against services on a development machine.
 
 ## Run CI
 
