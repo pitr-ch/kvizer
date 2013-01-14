@@ -25,24 +25,23 @@ job 'install-htop' do
 end
 
 job 'install-katello' do
-  url = case
-          when vm.fedora?
-            if options[:latest]
-              'http://fedorapeople.org/groups/katello/releases/yum/nightly/' +
-                  'Fedora/16/x86_64/katello-repos-latest.rpm'
-            else
-              'http://fedorapeople.org/groups/katello/releases/yum/' +
-                  "#{options[:release_version]}/Fedora/16/x86_64/#{options[:katello_repos]}"
-            end
-          when vm.rhel?
-            'http://fedorapeople.org/groups/katello/releases/yum/1.2/' +
-                'RHEL/6/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm'
-          else
-            raise RuntimeError, "unknown distribution, currently only fedora and RHEL supported"
-        end
-
-
   online do
+    url = case
+            when vm.fedora?
+              if options[:latest]
+                'http://fedorapeople.org/groups/katello/releases/yum/nightly/' +
+                    'Fedora/16/x86_64/katello-repos-latest.rpm'
+              else
+                'http://fedorapeople.org/groups/katello/releases/yum/' +
+                    "#{options[:release_version]}/Fedora/16/x86_64/#{options[:katello_repos]}"
+              end
+            when vm.rhel?
+              'http://fedorapeople.org/groups/katello/releases/yum/1.2/' +
+                  'RHEL/6/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm'
+            else
+              raise RuntimeError, "unknown distribution, currently only fedora and RHEL supported"
+          end
+
     shell! 'root', "rpm -Uvh #{url}"
     yum_install "katello-repos-testing" if options[:latest]
     yum_install "katello-all"
