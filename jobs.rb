@@ -9,6 +9,9 @@ job 'base' do
     shell! 'root', 'mkdir -p .ssh', :password => config.root_password
     shell! 'root', %(printf "#{config.authorized_keys}" > .ssh/authorized_keys),
               :password => config.root_password
+    shell! 'root', 'chmod 700 .ssh'
+    shell! 'root', 'chmod 600 .ssh/authorized_keys'
+    shell! 'root', 'restorecon -R -v /root/.ssh' # SELinux evil
   end
 end
 
@@ -23,8 +26,17 @@ end
 
 job 'install-katello-nightly' do
   online do
-    shell! 'root',
-              "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
+    url = case
+            when vm.fedora?
+              "http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
+            when vm.rhel?
+              "http://fedorapeople.org/groups/katello/releases/yum/1.2/RHEL/6/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm"
+            else
+              raise RuntimeError, "unknown distribution, currently only fedora and RHEL supported"
+          end
+
+    shell! 'root', "rpm -Uvh #{url}"
+    shell 'root', 'sed -i "s/\$releasever/6/" /etc/yum.repos.d/katello*'
     yum_install "katello-repos-testing"
     yum_install "katello-all"
   end
@@ -80,6 +92,9 @@ end
 job 'install-guest-additions' do
   online do
     version = config.virtual_box_version
+    if vm.rhel?
+      shell! 'root', 'rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm'
+    end
     yum_install %w(dkms kernel-devel @development-tools)
     shell! 'root',
               "wget http://download.virtualbox.org/virtualbox/#{version}/VBoxGuestAdditions_#{version}.iso"

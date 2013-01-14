@@ -32,6 +32,18 @@ class Kvizer
       kvizer.info.attributes[name][:mac]
     end
 
+    def guest_os
+      kvizer.info.attributes[name][:guest_os]
+    end
+
+    def fedora?
+      guest_os =~ /Fedora/
+    end
+
+    def rhel?
+      guest_os =~ /Red Hat/
+    end
+
     def shell(user, cmd, options = { })
       logger.info "sh@#{user}$ #{cmd}"
 
