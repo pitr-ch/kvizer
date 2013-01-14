@@ -72,12 +72,20 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
   - root password: katello 
     - minimal installation
     - Use `Customize now` and add packages:
-      - Applications/editors
+      - Applications/editors (not for RHEL?)
       - Servers/ServerConfigurationTools
-      - BaseSystem/Base
+      - BaseSystem/Base (not for RHEL?)
       - BaseSystem/SystemTools
 - create a snapshot of you virtual machine named "clean installation"
 - install arp-scan on host (Kvizer actually uses this for detecting virtual machine ip address)
+
+### RHEL based image
+
+- tested with RHEL 6.3
+- during minimal installation choose Servers/ServerConfigurationTools and BaseSystem/SystemTools
+- make sure networking is started on boot (/etc/sysconfig/networking-scripts/* ONBOOT)
+- enable PermitRootLogin in sshd config
+- create snapshot "clean installation"
 
 ### Prepare Kvizer
 

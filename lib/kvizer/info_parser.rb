@@ -60,7 +60,9 @@ class Kvizer
 
       @attributes = raw_attributes.values.inject({ }) do |hash, raw_attributes|
         name       = raw_attributes['Name']
+        guest_os   = raw_attributes['Guest OS']
         hash[name] = { :name => name,
+                       :guest_os => guest_os,
                        :mac  => mac = find_mac(raw_attributes, config.hostonly.name),
                        :ip   => mac_ip_map[mac] }
         hash

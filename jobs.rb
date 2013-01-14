@@ -8,23 +8,41 @@ job 'base' do
   online do
     shell! 'root', 'mkdir -p .ssh', :password => config.root_password
     shell! 'root', %(printf "#{config.authorized_keys}" > .ssh/authorized_keys),
-           :password => config.root_password
+      :password => config.root_password
+    shell! 'root', 'chmod 700 .ssh'
+    shell! 'root', 'chmod 600 .ssh/authorized_keys'
+    shell! 'root', 'restorecon -R -v /root/.ssh' # SELinux evil
   end
 end
 
+# TODO rename job
 job 'install-htop' do
-  online { yum_install "htop" }
+  online do
+    yum_install "htop"
+    yum_install "multitail"
+    yum_install "ack"
+  end
 end
 
 job 'install-katello' do
   online do
-    shell! 'root', if options[:latest]
-                     'rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/' +
-                         'nightly/Fedora/16/x86_64/katello-repos-latest.rpm'
-                   else
-                     'rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/' +
-                         "#{options[:release_version]}/Fedora/16/x86_64/#{options[:katello_repos]}"
-                   end
+    url = case
+            when vm.fedora?
+              if options[:latest]
+                'http://fedorapeople.org/groups/katello/releases/yum/nightly/' +
+                    'Fedora/16/x86_64/katello-repos-latest.rpm'
+              else
+                'http://fedorapeople.org/groups/katello/releases/yum/' +
+                    "#{options[:release_version]}/Fedora/16/x86_64/#{options[:katello_repos]}"
+              end
+            when vm.rhel?
+              'http://fedorapeople.org/groups/katello/releases/yum/1.2/' +
+                  'RHEL/6/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm'
+            else
+              raise RuntimeError, "unknown distribution, currently only fedora and RHEL supported"
+          end
+
+    shell! 'root', "rpm -Uvh #{url}"
     yum_install "katello-repos-testing" if options[:latest]
     yum_install "katello-all"
   end
@@ -72,6 +90,9 @@ end
 job 'install-guest-additions' do
   online do
     version = config.virtual_box_version
+    if vm.rhel?
+      shell! 'root', 'rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm'
+    end
     yum_install %w(dkms kernel-devel @development-tools)
     shell! 'root',
            "wget http://download.virtualbox.org/virtualbox/#{version}/VBoxGuestAdditions_#{version}.iso"
