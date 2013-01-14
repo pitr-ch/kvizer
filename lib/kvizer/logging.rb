@@ -81,9 +81,10 @@ class Kvizer
 
     def file_outputter
       @file_outputter ||= if kvizer.config.logger.output
-                            outputter           = Log4r::FileOutputter.new(
-                                kvizer.config.logger.output,
-                                :filename => File.expand_path(kvizer.config.logger.output, kvizer.root))
+                            path = File.expand_path(
+                                "#{kvizer.config.logger.output}/#{Time.now.strftime '%y.%m.%d %H.%M.%S'} #{ARGV.first}.log", kvizer.root)
+
+                            outputter           = Log4r::FileOutputter.new(kvizer.config.logger.output, :filename => path)
                             outputter.formatter = @standard_formatter
                             outputter.level     = kvizer.config.logger.level
                             outputter

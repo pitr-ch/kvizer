@@ -8,7 +8,7 @@ job 'base' do
   online do
     shell! 'root', 'mkdir -p .ssh', :password => config.root_password
     shell! 'root', %(printf "#{config.authorized_keys}" > .ssh/authorized_keys),
-              :password => config.root_password
+      :password => config.root_password
     shell! 'root', 'chmod 700 .ssh'
     shell! 'root', 'chmod 600 .ssh/authorized_keys'
     shell! 'root', 'restorecon -R -v /root/.ssh' # SELinux evil
@@ -24,28 +24,27 @@ job 'install-htop' do
   end
 end
 
-job 'install-katello-nightly' do
-  online do
-    url = case
-            when vm.fedora?
-              "http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
-            when vm.rhel?
-              "http://fedorapeople.org/groups/katello/releases/yum/1.2/RHEL/6/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm"
-            else
-              raise RuntimeError, "unknown distribution, currently only fedora and RHEL supported"
-          end
-
-    shell! 'root', "rpm -Uvh #{url}"
-    shell 'root', 'sed -i "s/\$releasever/6/" /etc/yum.repos.d/katello*'
-    yum_install "katello-repos-testing"
-    yum_install "katello-all"
-  end
-end
-
 job 'install-katello' do
+  url = case
+          when vm.fedora?
+            if options[:latest]
+              'http://fedorapeople.org/groups/katello/releases/yum/nightly/' +
+                  'Fedora/16/x86_64/katello-repos-latest.rpm'
+            else
+              'http://fedorapeople.org/groups/katello/releases/yum/' +
+                  "#{options[:release_version]}/Fedora/16/x86_64/#{options[:katello_repos]}"
+            end
+          when vm.rhel?
+            'http://fedorapeople.org/groups/katello/releases/yum/1.2/' +
+                'RHEL/6/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm'
+          else
+            raise RuntimeError, "unknown distribution, currently only fedora and RHEL supported"
+        end
+
+
   online do
-    shell! 'root',
-              "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/1.1/Fedora/16/x86_64/katello-repos-1.1.3-1.fc16.noarch.rpm"
+    shell! 'root', "rpm -Uvh #{url}"
+    yum_install "katello-repos-testing" if options[:latest]
     yum_install "katello-all"
   end
 end
@@ -78,12 +77,12 @@ job 'add-user' do
 
     shell! 'root', 'chmod u+w /etc/sudoers'
     shell! 'root',
-              'sed -i -E "s/# %wheel\s+ALL=\(ALL\)\s+NOPASSWD: ALL/%wheel\tALL=\(ALL\)\tNOPASSWD: ALL/" ' +
-                  '/etc/sudoers'
+           'sed -i -E "s/# %wheel\s+ALL=\(ALL\)\s+NOPASSWD: ALL/%wheel\tALL=\(ALL\)\tNOPASSWD: ALL/" ' +
+               '/etc/sudoers'
     shell! 'root',
-              'sed -i -E "s/%wheel\s+ALL=\(ALL\)\s+ALL/# %wheel\tALL=\(ALL\)\tALL/" /etc/sudoers'
+           'sed -i -E "s/%wheel\s+ALL=\(ALL\)\s+ALL/# %wheel\tALL=\(ALL\)\tALL/" /etc/sudoers'
     shell! 'root',
-              'sed -i -E "s/Defaults\s+requiretty/# Defaults\trequiretty/" /etc/sudoers'
+           'sed -i -E "s/Defaults\s+requiretty/# Defaults\trequiretty/" /etc/sudoers'
     shell! 'root', 'chmod u-w /etc/sudoers'
     shell! 'user', 'sudo echo a' # test
   end
@@ -97,7 +96,7 @@ job 'install-guest-additions' do
     end
     yum_install %w(dkms kernel-devel @development-tools)
     shell! 'root',
-              "wget http://download.virtualbox.org/virtualbox/#{version}/VBoxGuestAdditions_#{version}.iso"
+           "wget http://download.virtualbox.org/virtualbox/#{version}/VBoxGuestAdditions_#{version}.iso"
     shell! 'root', 'mkdir additions'
     shell! 'root', "mount -o loop VBoxGuestAdditions_#{version}.iso ./additions"
     shell! 'root', 'additions/VBoxLinuxAdditions.run'
@@ -148,9 +147,11 @@ job 'install-packaging' do
     yum_install %w(tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt libxslt-devel)
 
     # koji setup
-    #shell! 'user', 'mkdir $HOME/.koji'
-    #shell! 'user', 'ln -s $HOME/support/koji/katello-config $HOME/.koji/katello-config'
-    #shell! 'user', %(echo 'KOJI_OPTIONS=-c ~/.koji/katello-config build --nowait' | tee $HOME/.titorc)
+    shell! 'user', 'mkdir $HOME/.koji'
+    shell! 'user', 'ln -s $HOME/support/koji/katello-config $HOME/.koji/katello-config'
+    shell! 'user', %(echo 'KOJI_OPTIONS=-c ~/.koji/katello-config build --nowait' | tee $HOME/.titorc)
+    # patch koji-cli to be able to download scratch built rpms, see https://fedorahosted.org/koji/ticket/237
+    shell! 'user', 'cat support/0001-koji-cli-add-download-scratch-build-command.patch | sudo patch -p0 /usr/bin/koji'
   end
 end
 
@@ -160,26 +161,55 @@ job 'package2' do # TODO rename to package
     shell! 'user', "cd katello-build-source; git checkout #{options[:branch]}"
 
     shell! 'root',
-              #"rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-1.3.1-1.fc16.noarch.rpm"
-              # latest links to 1.2, use above variant when you encounter problems
-              "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
-
-
+           #"rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-1.3.1-1.fc16.noarch.rpm"
+           # latest links to 1.2, use above variant when you encounter problems
+           "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
     yum_install "katello-repos-testing"
+    yum_install "puppet" # workaround for missing puppet user when puppet is installed by yum-builddep
 
-    yum_install "puppet" # FIXME workaround for missing puppet user when puppet is installed by yum-builddep
+    store_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
+    shell! 'user', "mkdir -p #{store_dir}"
 
     spec_dirs = %w(src cli katello-configure katello-utils repos selinux/katello-selinux scripts/system-test)
 
-    rpms = spec_dirs.map do |dir|
-      logger.info "building '#{dir}'"
+    logger.info "building src.rpms"
+    src_rpms = spec_dirs.inject({ }) do |hash, dir|
       result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=.fc16"
       result.out =~ /^Wrote: (.*src\.rpm)$/
-      shell! 'root', "yum-builddep -y #{$1}"
-      result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.fc16"
-      result.out =~ /Successfully built: (.*)\Z/
-      $1.split(/\s/).tap { |rpms| logger.info "rpms: #{rpms.join(' ')}" }
-    end.flatten
+      srpm_file = $1
+      shell! 'user', "cp #{srpm_file} #{store_dir}"
+      hash.update dir => srpm_file
+    end
+
+    rpms = if options[:use_koji]
+             logger.info "building rpms in Koji"
+             task_ids = spec_dirs.inject({ }) do |hash, dir|
+               result = shell! 'user',
+                               "koji -c ~/.koji/katello-config build --scratch katello-nightly-fedora16 #{src_rpms[dir]}"
+               hash.update dir => /^Created task: (\d+)$/.match(result.out)[1]
+             end
+
+             logger.info "waiting until rpms are finished"
+             shell! 'user', "koji -c ~/.koji/katello-config watch-task #{task_ids.values.join ' '}"
+
+             logger.info "collecting the rpms"
+             task_ids.map do |dir, task_id|
+               result = shell! 'user',
+                               "cd #{store_dir}; koji -c ~/.koji/katello-config download-scratch-build #{task_id}"
+               result.out.split("\n").map { |line| store_dir + /^Downloading \[\d+\/\d+\]: (.+)$/.match(line)[1] }
+             end
+           else
+             logger.info "building rpms locally"
+             spec_dirs.map do |dir|
+               shell! 'root', "yum-builddep -y #{src_rpms[dir]}"
+               result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.fc16"
+               result.out =~ /Successfully built: (.*)\Z/
+               $1.split(/\s/).tap do |rpms|
+                 shell! 'user', "cp #{rpms.join(' ')} #{store_dir}"
+                 logger.info "rpms: #{rpms.join(' ')}"
+               end
+             end
+           end.flatten
 
     logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
 
@@ -188,7 +218,6 @@ job 'package2' do # TODO rename to package
     unless result.success
       shell 'root', "rpm -Uvh --oldpackage --force #{to_install.join ' '}"
     end
-    #rpm -Uvh --oldpackage --force $RPMBUILD/*/*/*rpm
   end
 end
 
@@ -212,11 +241,11 @@ job 'relax-security' do
     # allow incoming connections to postgresql
     unless shell('root', 'cat /var/lib/pgsql/data/pg_hba.conf | grep "192.168.25.0/24"').success
       shell! 'root',
-                'echo "host all all 192.168.25.0/24 trust" | tee -a /var/lib/pgsql/data/pg_hba.conf'
+             'echo "host all all 192.168.25.0/24 trust" | tee -a /var/lib/pgsql/data/pg_hba.conf'
     end
     shell! 'root',
-              "sed -i 's/^#.*listen_addresses =.*/listen_addresses = '\\'*\\'/ " +
-                  '/var/lib/pgsql/data/postgresql.conf'
+           "sed -i 's/^#.*listen_addresses =.*/listen_addresses = '\\'*\\'/ " +
+               '/var/lib/pgsql/data/postgresql.conf'
 
     # allow incoming connections to elasticsearch
     el_config = '/etc/elasticsearch/elasticsearch.yml'

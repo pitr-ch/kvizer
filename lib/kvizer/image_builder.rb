@@ -11,7 +11,7 @@ class Kvizer
     end
 
     def rebuild(job_name, last_job = nil, options = { })
-      logger.info "rebuilding #{job_name}"
+      logger.info "rebuilding #{job_name}..#{last_job} with options #{options.inspect}"
       job      = collection[job_name]
       previous = collection.previous_job(job)
       if previous

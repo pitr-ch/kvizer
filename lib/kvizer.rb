@@ -24,21 +24,25 @@ class Kvizer
   require 'kvizer/jobs'
   require 'kvizer/image_builder'
 
-  attr_reader :logger, :info, :host, :logging
+  attr_reader :logger, :host, :logging
 
   def initialize
     @logging = Logging.new(self)
     @logger  = logging['virtual']
     @host    = Host.new(self)
-
-    @info = InfoParser.new(self)
   end
 
   def vm(part_name)
-    regexp = part_name.kind_of?(String) ? /#{part_name}/ : part_name
-    vms.select { |vm| vm.name =~ regexp }.
-        tap { |arr| raise "ambiguous vm name #{part_name}" if arr.size > 1 }.
-        first
+    vms.find { |vm| vm.name == part_name } || begin
+      regexp = part_name.kind_of?(String) ? /#{part_name}/ : part_name
+      vms.select { |vm| vm.name =~ regexp }.
+          tap { |arr| raise "ambiguous vm name #{part_name}" if arr.size > 1 }.
+          first
+    end
+  end
+
+  def info
+    @info ||= InfoParser.new(self)
   end
 
   def vm!(part_name)
@@ -48,16 +52,6 @@ class Kvizer
   def vms(reload = false)
     @vms = nil if reload
     @vms ||= info.attributes.map { |name, _| VM.new(self, name) }
-  end
-
-  def setup_development_vms
-    # TODO add machine to host
-    config.development_vms.each do |name, config|
-      if clone = vm(name) rescue nil
-        clone.delete
-      end
-      vm(config.template).clone_vm(name, config.snapshot)
-    end
   end
 
   def to_s
@@ -72,8 +66,10 @@ class Kvizer
     me = self
 
     @jobs_definitions ||= Jobs::DSL.new self do
-      path = "#{me.root}/jobs.rb"
-      instance_eval File.read(path), path
+      me.config.jobs_paths.each do |path|
+        path = File.expand_path(path, me.root)
+        instance_eval File.read(path), path
+      end
     end.jobs
   end
 

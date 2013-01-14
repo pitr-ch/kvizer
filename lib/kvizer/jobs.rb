@@ -6,7 +6,7 @@ class Kvizer
 
       def initialize(kvizer, name, &definition)
         @kvizer, @name            = kvizer, name
-        @logger                   = kvizer.logging["job-#{name}"]
+        @logger                   = kvizer.logging["job(#{name})"]
         @online_job, @offline_job = nil
         instance_eval &definition if definition
       end
@@ -77,6 +77,7 @@ class Kvizer
         raise ArgumentError unless Hash === options
         default_options = config.job_options.has_key?(name.to_sym) ? config.job_options[name.to_sym].to_hash : { }
         @vm, @options   = vm, default_options.merge(options) { |_, o, n| n ? n : o }
+        logger.info "running with options #{self.options.inspect}"
         block.call
       ensure
         @vm = @options = nil

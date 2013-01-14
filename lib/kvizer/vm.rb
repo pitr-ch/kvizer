@@ -19,9 +19,13 @@ class Kvizer
     attr_reader :kvizer, :name, :logger
 
     def initialize(kvizer, name)
-      @kvizer, @name  = kvizer, name
+      @kvizer, @name   = kvizer, name
       @logger          = kvizer.logging[name]
       @ssh_connections = { }
+    end
+
+    def safe_name
+      name.gsub(/[^-a-zA-Z0-9.]/, '-')
     end
 
     def ip
@@ -85,16 +89,14 @@ class Kvizer
       result
     end
 
-    def ssh_connection(user, password = nil) # FIXME do better
-                                             # TODO ignore known hosts
-                                             # ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no petr@host
+    def ssh_connection(user, password = nil)
       @ssh_connections[user] ||= session = begin
         logger.debug "SSH connecting #{user}"
         Net::SSH.start(ip, user, :password => password, :paranoid => false)
       end
     end
 
-    def ssh_close # TODO do better
+    def ssh_close # TODO collect and close all ssh connections
       @ssh_connections.keys.each do |user|
         ssh = @ssh_connections.delete user
         ssh.close unless ssh.closed?
@@ -105,7 +107,7 @@ class Kvizer
       status == :running
     end
 
-    def wait_for(status, timeout = nil)
+    def wait_for(status, timeout = nil, interval = 5)
       start = Time.now
       loop do
         kvizer.info.reload_attributes
@@ -118,7 +120,7 @@ class Kvizer
           return false
         end
 
-        sleep 5
+        sleep interval
       end
     end
 
@@ -139,9 +141,10 @@ class Kvizer
 
     def set_hostname
       raise unless running?
-      shell 'root', "hostname #{name}"
-    rescue Net::SSH::AuthenticationFailed
-      logger.warn 'cannot authenticate, no ssh key yet?'
+      shell 'root', "hostname #{safe_name}"
+    rescue => e
+      logger.warn "hostname setting failed: #{e.message} (#{e.class})"
+      e.backtrace.each { |l| logger.warn '  %s' % l }
     end
 
     def status
@@ -185,7 +188,7 @@ class Kvizer
         sleep 1
         host.shell! cmd
       end
-      sleep 5 # FIXME other commands fail after this when called immidietly
+      sleep 5 # other commands fail after this when called immidietly
     end
 
     def restore_snapshot(snapshot_name)
@@ -213,7 +216,7 @@ class Kvizer
 
     def stop_and_wait
       stop
-      wait_for(:stopped, 5*60) || power_off!
+      wait_for(:stopped, 10*60) || power_off!
     end
 
     def power_off!

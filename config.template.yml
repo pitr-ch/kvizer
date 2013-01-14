@@ -9,6 +9,15 @@
 # run virtual machines headless?
 :headless: true
 
+:jobs_paths:
+- jobs.rb
+
+:commands_paths:
+- commands.rb
+
+# additional config file which is deep merged with this one default
+:config_overide:
+
 # configuration of a private network for katello machines
 :hostonly:
   :name: vboxnet0
@@ -21,7 +30,7 @@
     :upper_ip: 192.168.25.110
 
 :logger:
-  :output: "kvizer.log"
+  :output: logs
   :print_to_stdout: true
   :level: 0
 
@@ -38,7 +47,7 @@
 # path to katello on the machine
 :katello_path: /home/user/redhat/katello
 
-:virtual_box_version: 4.2.4
+:virtual_box_version: 4.2.6
 
 # name of the katello base machine
 :katello_base: katello-base
@@ -53,8 +62,7 @@
 - setup-shared-folders
 - install-htop
 - install-packaging
-# note you can use install-katello if nightly is broken, but it can be outdated
-- install-katello-nightly
+- install-katello
 - configure-katello
 - turnoff-services
 - relax-security
@@ -65,8 +73,13 @@
 - reconfigure-katello
 - system-test
 
-# default options of jobs
+# default job options
 :job_options:
   :package2:
     :source: /home/user/redhat/katello
     :branch: master
+    :use_koji: false
+  :install-katello:
+    :latest: true
+    :release_version: "1.2"
+    :katello_repos: katello-repos-1.2.4-1.fc16.noarch.rpm
