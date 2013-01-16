@@ -35,11 +35,19 @@ job 'install-katello' do
                raise 'unknown distribution, currently only Fedora and RHEL supported'
              end
 
-    url = options[:repositories][system][options[:latest] ? :latest : :release]
+    url = options[:repositories][system][options[:version]]
 
-    shell! 'root', "rpm -Uvh #{url}"
-    yum_install 'katello-repos-testing' if options[:latest]
-    yum_install 'katello-all'
+    case options[:product]
+      when 'katello'
+        shell! 'root', "rpm -Uvh #{url}"
+        yum_install 'katello-repos-testing' if options[:version] == :latest
+        yum_install 'katello-all'
+      when 'cfse'
+        yum_add_repo options[:repositories][system][options[:product].to_sym][options[:version]]
+        yum_install 'katello-all'
+      else
+        raise "Unsupported product #{options[:product]}"
+    end
   end
 end
 
