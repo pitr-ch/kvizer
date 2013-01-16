@@ -81,6 +81,8 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 
 ### RHEL based image
 
+_RHEL support is experimental._
+
 - tested with RHEL 6.3
 - during minimal installation choose Servers/ServerConfigurationTools and BaseSystem/SystemTools
 - make sure networking is started on boot (/etc/sysconfig/networking-scripts/* ONBOOT)
