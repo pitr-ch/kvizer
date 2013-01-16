@@ -149,19 +149,24 @@ class Kvizer
 
     def status
       result     = host.shell!('VBoxManage list runningvms').out
-      box_status  = !!(result =~ /"#{name}"/)
-      ping_status = host.shell("ping -c 1 -W 5 #{ip}").success
-      ssh_status = host.shell("nc #{ip} 22 -w 5").success
+      box_status = !!(result =~ /"#{name}"/)
+      if ip
+        ping_status = host.shell("ping -c 1 -W 5 #{ip}").success
+        ssh_status  = host.shell("nc -z #{ip} 22").success
+      else
+        ping_status = ssh_status = false
+      end
+
       case [box_status, ping_status, ssh_status]
-        when [false, false, false]
-          :stopped
-        when [true, false, false]
-          :no_connection
-        when [true, true, false]
-          :no_ssh_running
-        when [true, true, true]
-          :running
-        else
+      when [false, false, false]
+        :stopped
+      when [true, false, false]
+        :no_connection
+      when [true, true, false]
+        :no_ssh_running
+      when [true, true, true]
+        :running
+      else
         :unknown
       end
     end
