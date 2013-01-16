@@ -49,6 +49,12 @@ class Kvizer
         vm.shell! 'root', "yum -y install #{packages.join(' ')}"
       end
 
+      def yum_add_repo(*urls)
+        urls.each do |url|
+          vm.shell! 'root', "yum-config-manager --add-repo  #{url}"
+        end
+      end
+
       def wait_for(timeout = nil, sleep_interval = 5, &condition)
         start = Time.now
         loop do

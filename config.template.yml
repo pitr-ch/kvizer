@@ -80,11 +80,18 @@
     :branch: master
     :use_koji: false
   :install-katello:
-    :latest: true
     :repositories:
       :fedora:
-        :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/Fedora/16/x86_64/katello-repos-1.2.4-1.fc16.noarch.rpm"
-        :latest: "http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
+        :katello:
+          :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/Fedora/16/x86_64/katello-repos-1.2.4-1.fc16.noarch.rpm"
+          :latest: "http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
+        :cfse:
+           :release: "http://download.englab.brq.redhat.com/rel-eng/CloudForms/1.1/latest/el6-se/x86_64/os/"
       :rhel:
-        :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/RHEL/6Server/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm"
-        :latest: "http://fedorapeople.org/groups/katello/releases/yum/nightly/RHEL/6Server/x86_64/katello-repos-latest.rpm"
+        :katello:
+          :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/RHEL/6Server/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm"
+          :latest: "http://fedorapeople.org/groups/katello/releases/yum/nightly/RHEL/6Server/x86_64/katello-repos-latest.rpm"
+        :cfse:
+          :release: "http://download.englab.brq.redhat.com/rel-eng/CloudForms/1.1/latest/el6-se/x86_64/os/"
+    :version: :latest
+    :product: katello
