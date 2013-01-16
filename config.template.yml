@@ -81,5 +81,10 @@
     :use_koji: false
   :install-katello:
     :latest: true
-    :release_version: "1.2"
-    :katello_repos: katello-repos-1.2.4-1.fc16.noarch.rpm
+    :repositories:
+      :fedora:
+        :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/Fedora/16/x86_64/katello-repos-1.2.4-1.fc16.noarch.rpm"
+        :latest: "http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
+      :rhel:
+        :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/RHEL/6Server/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm"
+        :latest: "http://fedorapeople.org/groups/katello/releases/yum/nightly/RHEL/6Server/x86_64/katello-repos-latest.rpm"

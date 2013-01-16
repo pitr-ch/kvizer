@@ -8,7 +8,7 @@ job 'base' do
   online do
     shell! 'root', 'mkdir -p .ssh', :password => config.root_password
     shell! 'root', %(printf "#{config.authorized_keys}" > .ssh/authorized_keys),
-      :password => config.root_password
+           :password => config.root_password
     shell! 'root', 'chmod 700 .ssh'
     shell! 'root', 'chmod 600 .ssh/authorized_keys'
     shell! 'root', 'restorecon -R -v /root/.ssh' # SELinux evil
@@ -26,30 +26,25 @@ end
 
 job 'install-katello' do
   online do
-    url = case
-            when vm.fedora?
-              if options[:latest]
-                'http://fedorapeople.org/groups/katello/releases/yum/nightly/' +
-                    'Fedora/16/x86_64/katello-repos-latest.rpm'
-              else
-                'http://fedorapeople.org/groups/katello/releases/yum/' +
-                    "#{options[:release_version]}/Fedora/16/x86_64/#{options[:katello_repos]}"
-              end
-            when vm.rhel?
-              'http://fedorapeople.org/groups/katello/releases/yum/1.2/' +
-                  'RHEL/6/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm'
-            else
-              raise RuntimeError, "unknown distribution, currently only fedora and RHEL supported"
-          end
+    system = case
+             when vm.fedora?
+               :fedora
+             when vm.rhel?
+               :rhel
+             else
+               raise 'unknown distribution, currently only Fedora and RHEL supported'
+             end
+
+    url = options[:repositories][system][options[:latest] ? :latest : :release]
 
     shell! 'root', "rpm -Uvh #{url}"
-    yum_install "katello-repos-testing" if options[:latest]
-    yum_install "katello-all"
+    yum_install 'katello-repos-testing' if options[:latest]
+    yum_install 'katello-all'
   end
 end
 
 job 'configure-katello' do
-  online { shell! 'root', "katello-configure --no-bars" }
+  online { shell! 'root', 'katello-configure --no-bars' }
 end
 
 job 'turnoff-services' do
