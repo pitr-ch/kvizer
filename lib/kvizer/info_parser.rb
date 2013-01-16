@@ -26,17 +26,17 @@ class Kvizer
     end
 
     def table
-      columns   = [-30, 15, 13]
+      columns   = [-30, 15, 13, 20]
       format    = columns.map { |c| "%#{c}s" }.join('  ') + "\n"
       delimiter = columns.map { |c| '-'*c.abs }.join('  ') + "\n"
-      head      = %w(name ip status)
+      head      = %w(name ip status os)
       data      = attributes.values.map do |attr|
-        { :name => attr[:name], :ip => attr[:ip], :status => kvizer.vm(attr[:name]).status }
+        { :name => attr[:name], :ip => attr[:ip], :status => kvizer.vm(attr[:name]).status, :guest_os => attr[:guest_os] }
       end
       delimiter + format % head + delimiter + data.sort do |a, b|
         [a[:status].to_s, a[:name].to_s] <=> [b[:status].to_s, b[:name].to_s]
       end.map do |attr|
-        format % [attr[:name], attr[:ip], attr[:status]]
+        format % [attr[:name], attr[:ip], attr[:status], attr[:guest_os]]
       end.join + delimiter
     end
 
