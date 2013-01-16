@@ -142,6 +142,7 @@ class Kvizer
     def set_hostname
       raise unless running?
       shell 'root', "hostname #{safe_name}"
+      shell 'root', "echo 127.0.0.1 #{safe_name} >> /etc/hosts"
     rescue => e
       logger.warn "hostname setting failed: #{e.message} (#{e.class})"
       e.backtrace.each { |l| logger.warn '  %s' % l }
