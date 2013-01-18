@@ -220,6 +220,7 @@ class Kvizer
       run headless
       wait_for :running
       set_hostname
+      sleep 5 # give the machine time to start fully
     end
 
     def stop_and_wait
