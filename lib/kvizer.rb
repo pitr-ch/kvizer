@@ -31,7 +31,7 @@ class Kvizer
 
   def initialize
     @logging = Logging.new(self)
-    @logger  = logging['virtual']
+    @logger  = logging['kvizer']
     @host    = Host.new(self)
   end
 

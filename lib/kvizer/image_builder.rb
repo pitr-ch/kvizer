@@ -7,7 +7,7 @@ class Kvizer
       @kvizer     = kvizer
       @vm         = vm
       @collection = collection
-      @logger     = kvizer.logging["image-base"]
+      @logger     = kvizer.logging["image-builder"]
     end
 
     def rebuild(job_name, last_job = nil, options = { })
