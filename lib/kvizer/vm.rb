@@ -80,6 +80,8 @@ class Kvizer
       end
       ssh.loop
 
+      logger.warn "'#{cmd}' failed" if options[:warn]
+
       return ShellOutResult.new(exit_code == 0, stdout_data, stderr_data)
     end
 
