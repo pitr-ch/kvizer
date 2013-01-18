@@ -96,13 +96,13 @@ _RHEL support is experimental._
   - run `dhclient eth0` to connecto to the network
   - add a RHEL repository
 
-        cat /etc/yum.repos.d/redhat.repo
-        [rhel]
-        name=Red Hat Enterprise Linux 6.3 - $basearch
-        baseurl=<repository for RHEL 6.3 Server>
-        enabled=1
-        gpgcheck=1
-        gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release,file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
+          cat /etc/yum.repos.d/redhat.repo
+          [rhel]
+          name=Red Hat Enterprise Linux 6.3 - $basearch
+          baseurl=<repository for RHEL 6.3 Server>
+          enabled=1
+          gpgcheck=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release,file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
 
   - run `yum install NetworkManager` to get network working
 - power down and create snapshot "clean installation"
