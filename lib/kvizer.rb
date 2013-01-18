@@ -11,7 +11,10 @@ $: << lib_path unless $:.include? lib_path
 
 
 class Kvizer
-  ShellOutResult = Struct.new(:success, :out, :err)
+  class ShellOutResult < Struct.new(:success, :out, :err)
+    alias_method :success?, :success
+  end
+
   class CommandFailed < StandardError
   end
 
