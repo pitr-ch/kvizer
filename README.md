@@ -20,7 +20,7 @@ Bugs, planed enhancements, questions can be found on [github issues](https://git
   - run *system-tests*
 - machine hostnames are same as VM names
 - auto-mounting of shared directories
-  - `kvizer/remote_bin` for shared command line tools (commands are accessible on guest, the directory is added to path on guest) 
+  - `kvizer/remote_bin` for shared command line tools (commands are accessible on guest, the directory is added to path on guest)
   - `kvizer/support` for builds and other shared files
 - platform independent-ish (*nix systems only)
   - based on VirtualBox
@@ -34,13 +34,13 @@ Kvizer uses as basic building blocks jobs which are defined in `jobs.rb` (other 
 
 ### Typical VM workflow is:
 
-- clean-fedora16 
+- clean-fedora16
   - snapshots: "clean installation"
-- katello-base 
+- katello-base
   - cloned from clean-fedora16 at "clean installation" snapshot
   - used as a base for cloning other machines
   - snapshots: clean installation, base, update, add-user, install-guest-additions, setup-shared-folders, install-htop, install-packaging, install-katello-nightly, configure-katello, turnoff-services, relax-security, setup-development"
-- katello-dev[\d] 
+- katello-dev[\d]
   - cloned from katello-base at "setup-development" snapshot
 - ci-[a-branch-name]
   - cloned from katello-base at "install-packaging" snapshot
@@ -48,9 +48,9 @@ Kvizer uses as basic building blocks jobs which are defined in `jobs.rb` (other 
 
 ### Shared folders
 
-There are three shared folders: `redhat`, `remote_bin` and `support`. 
+There are three shared folders: `redhat`, `remote_bin` and `support`.
 
-- `redhat` for git repositories with projects you would like to share with a virtual machine. 
+- `redhat` for git repositories with projects you would like to share with a virtual machine.
 - `remote_bin` is added to PATH on every machine so needed commands can be easily added to all kvizer virtual machines.
 - `support` is used for support files. E.g. there is `.bash_profile` used by all kvizer virtual machines.
 
@@ -69,12 +69,12 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 - create virtual machine named 'clean-f16' in virtual box
 - note that for katello virtual machine you should allocate ~40GB of diskspace, 1.5GB of RAM and 2 CPU cores is also a good option
 - fill in these during installation
-  - root password: katello 
+  - root password: katello
     - minimal installation
     - Use `Customize now` and add packages:
-      - Applications/editors (not for RHEL?)
+      - Applications/editors
       - Servers/ServerConfigurationTools
-      - BaseSystem/Base (not for RHEL?)
+      - BaseSystem/Base
       - BaseSystem/SystemTools
 - create a snapshot of you virtual machine named "clean installation"
 - install arp-scan on host (Kvizer actually uses this for detecting virtual machine ip address)
@@ -83,11 +83,29 @@ First you must create a base Fedora 16 virtual server. This will serve as origin
 
 _RHEL support is experimental._
 
-- tested with RHEL 6.3
-- during minimal installation choose Servers/ServerConfigurationTools and BaseSystem/SystemTools
-- make sure networking is started on boot (/etc/sysconfig/networking-scripts/* ONBOOT)
-- enable PermitRootLogin in sshd config
-- create snapshot "clean installation"
+- download RHEL 6.3 Server
+- create virtual machine named `clean-rhel63` in virtual box
+- note that for katello virtual machine you should allocate ~40GB of diskspace, 1.5GB of RAM and 2 CPU cores is also a good option
+- fill in these during installation
+  - root password: katello
+    - minimal installation
+    - Use `Customize now` and add packages:
+      - BaseSystem/Base
+      - Servers/SystemAdministrationTools
+- post install
+  - run `dhclient eth0` to connecto to the network
+  - add a RHEL repository
+
+        cat /etc/yum.repos.d/redhat.repo
+        [rhel]
+        name=Red Hat Enterprise Linux 6.3 - $basearch
+        baseurl=<repository for RHEL 6.3 Server>
+        enabled=1
+        gpgcheck=1
+        gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release,file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
+
+  - run `yum install NetworkManager` to get network working
+- power down and create snapshot "clean installation"
 
 ### Prepare Kvizer
 
@@ -103,14 +121,14 @@ _RHEL support is experimental._
 - copy your certificate for koji to `support/koji/`, e.g. `support/koji/pchalupa.pem`
 - update path to this certificate in `support/koji/katello-config`
 - now you can build in koji with kvizer from its machines
- 
+
 ### Creating base image
 
 Run `kvizer build-base --vm clean-f16 --name katello-base` to create base development image from cleanly installed machine.
 
 ## Cloning a machine for development
 
-- Run `kvizer clone --vm a_base --name katello-dev --snapshot setup-development` to clone a machine for development. 
+- Run `kvizer clone --vm a_base --name katello-dev --snapshot setup-development` to clone a machine for development.
 - Run the machine `kvizer run --vm katello-dev`.
 - Setup Katello on a host machine to connect to the development machine (`kvizer info` will help you to find correct ip).
 - Now you can run Katello process locally against services on a development machine.
