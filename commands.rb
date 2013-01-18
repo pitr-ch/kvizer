@@ -108,9 +108,12 @@ command 'build' do
     opt :finish_job, 'Finish job name', :short => '-f', :type => :string
     opt :collection, 'Which job collection should be used',
         :short => '-c', :type => :string, :default => 'base_jobs'
+    opt :options, 'Job options string value is evaluated by Ruby to get the Hash',
+        :short => '-o', :type => :string
   end
   run do
-    rebuild @options[:vm], @options[:start_job], @options[:finish_job], @options[:collection].to_sym
+    rebuild @options[:vm], @options[:start_job], @options[:finish_job], @options[:collection].to_sym,
+            @options[:options] ? eval(@options[:options]) : { }
   end
 end
 
@@ -120,10 +123,13 @@ command 'build-base' do
                "for cloning development machines or to ru ci commands."
     vm_option.call self, 'Name of a clean installation'
     opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
+    opt :product, "Product to install ", :short => '-p', :type => :string,
+        :required => false, :default => kvizer.config.job_options.send('install-katello').product
   end
   run do
     clone_vm(get_vm, @options[:name], 'clean installation')
-    rebuild @options[:name], 'base', nil, :base_jobs
+    rebuild @options[:name], 'base', nil, :base_jobs,
+            :"install-katello" => { :product => @options[:product] }
   end
 end
 
