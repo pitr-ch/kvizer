@@ -58,6 +58,7 @@ class Kvizer
       stderr_data = ""
       exit_code   = nil
       exit_signal = nil
+      success     = nil
       ssh         = ssh_connection user, options[:password]
 
       ssh.open_channel do |channel|
@@ -79,11 +80,14 @@ class Kvizer
           end
           channel.on_request("exit-status") { |ch, data| exit_code = data.read_long }
           channel.on_request("exit-signal") { |ch, data| exit_signal = data.read_long }
+          success = exit_code == 0
         end
       end
       ssh.loop
 
-      return ShellOutResult.new(exit_code == 0, stdout_data, stderr_data)
+      logger.warn "'#{cmd}' failed" unless options[:no_warn] || success
+
+      return ShellOutResult.new(success, stdout_data, stderr_data)
     end
 
     def shell!(user, cmd, options = { })
@@ -229,6 +233,7 @@ class Kvizer
       run headless
       wait_for :running
       set_hostname
+      sleep 5 # give the machine time to start fully
     end
 
     def stop_and_wait

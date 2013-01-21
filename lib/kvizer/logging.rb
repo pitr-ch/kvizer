@@ -81,6 +81,7 @@ class Kvizer
 
     def file_outputter
       @file_outputter ||= if kvizer.config.logger.output
+                            FileUtils.mkdir_p kvizer.config.logger.output
                             path = File.expand_path(
                                 "#{kvizer.config.logger.output}/#{Time.now.strftime '%y.%m.%d %H.%M.%S'} #{ARGV.first}.log", kvizer.root)
 

@@ -35,7 +35,7 @@ job 'install-katello' do
                raise 'unknown distribution, currently only Fedora and RHEL supported'
              end
 
-    url = options[:repositories][system][options[:version]]
+    url = options[:repositories][system][options[:product].to_sym][options[:version]]
 
     case options[:product]
       when 'katello'
@@ -96,7 +96,8 @@ job 'install-guest-additions' do
     if vm.rhel?
       shell! 'root', 'rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm'
     end
-    yum_install %w(dkms kernel-devel @development-tools)
+    yum_install %w(dkms kernel-devel)
+    shell! 'root', 'yum -y groupinstall "Development Tools"'
     shell! 'root',
            "wget http://download.virtualbox.org/virtualbox/#{version}/VBoxGuestAdditions_#{version}.iso"
     shell! 'root', 'mkdir additions'
@@ -133,7 +134,7 @@ job 'setup-development' do
 
     # reset oauth
     shell! 'user', "sudo #{config.katello_path}/src/script/reset-oauth shhhh"
-    shell! 'root', 'service tomcat6 restart'
+    shell('root', 'service tomcat6 restart').success or shell!('root', 'service tomcat6 start')
     shell! 'root', 'service pulp-server restart'
 
     # create katello db
@@ -261,10 +262,9 @@ job 'relax-security' do
         "candlepin.auth.oauth.consumer.katello.secret = shhhh/' /etc/candlepin/candlepin.conf"
     shell! 'root', "sed -i 's/^.*oauth_secret: .*/    oauth_secret: shhhh/' /etc/katello/katello.yml"
 
-    shell! 'root', 'service pulp-server restart'
-    shell! 'root', 'service tomcat6 restart'
-    #       /home/use r/support/start-elastic.sh
-    shell! 'root', 'service elasticsearch restart'
-    shell! 'root', 'service postgresql restart'
+    shell 'root', 'service pulp-server restart'
+    shell 'root', 'service tomcat6 restart'
+    shell 'root', 'service elasticsearch restart'
+    shell 'root', 'service postgresql restart'
   end
 end

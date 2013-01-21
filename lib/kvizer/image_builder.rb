@@ -7,11 +7,11 @@ class Kvizer
       @kvizer     = kvizer
       @vm         = vm
       @collection = collection
-      @logger     = kvizer.logging["image-base"]
+      @logger     = kvizer.logging["image-builder"]
     end
 
     def rebuild(job_name, last_job = nil, options = { })
-      logger.info "rebuilding #{job_name}..#{last_job} with options #{options.inspect}"
+      logger.info "rebuilding #{job_name}..#{last_job ? last_job.name : ''} with options #{options.inspect}"
       job      = collection[job_name]
       previous = collection.previous_job(job)
       if previous

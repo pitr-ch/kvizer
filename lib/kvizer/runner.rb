@@ -24,6 +24,7 @@ class Kvizer
 
     def initialize()
       @commands = { }
+      @cli = ARGV.clone.join(' ')
       define_commands
     end
 
@@ -73,6 +74,7 @@ class Kvizer
     end
 
     def run
+      kvizer.logger.info @cli
       instance_eval &@command.run
       self
     end
