@@ -1,3 +1,6 @@
+require 'socket'
+require 'timeout'
+
 class Kvizer
   class VM
     class LinePrinter
@@ -148,12 +151,20 @@ class Kvizer
       e.backtrace.each { |l| logger.warn '  %s' % l }
     end
 
+    def status_of_ssh
+      timeout(5) { TCPSocket.open(ip, 22).close || true }
+      rescue Timeout::Error
+        false
+      rescue Errno::ECONNREFUSED
+        false
+    end
+
     def status
       result     = host.shell!('VBoxManage list runningvms').out
       box_status = !!(result =~ /"#{name}"/)
       if ip
         ping_status = host.shell("ping -c 1 -W 5 #{ip}").success
-        ssh_status  = host.shell("nc -z #{ip} 22").success
+        ssh_status = status_of_ssh
       else
         ping_status = ssh_status = false
       end
