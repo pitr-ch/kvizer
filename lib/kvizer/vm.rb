@@ -58,7 +58,7 @@ class Kvizer
       stderr_data = ""
       exit_code   = nil
       exit_signal = nil
-      success     = nil
+      final_success   = nil
       ssh         = ssh_connection user, options[:password]
 
       ssh.open_channel do |channel|
@@ -78,16 +78,18 @@ class Kvizer
             warn << data
             #$stderr << data
           end
-          channel.on_request("exit-status") { |ch, data| exit_code = data.read_long }
+          channel.on_request("exit-status") do |ch, data|
+            exit_code     = data.read_long
+            final_success = exit_code == 0
+          end
           channel.on_request("exit-signal") { |ch, data| exit_signal = data.read_long }
-          success = exit_code == 0
         end
       end
       ssh.loop
 
-      logger.warn "'#{cmd}' failed" unless options[:no_warn] || success
+      logger.warn "'#{cmd}' failed" unless options[:no_warn] || final_success
 
-      return ShellOutResult.new(success, stdout_data, stderr_data)
+      return ShellOutResult.new(final_success, stdout_data, stderr_data)
     end
 
     def shell!(user, cmd, options = { })
