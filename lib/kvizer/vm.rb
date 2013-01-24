@@ -27,8 +27,9 @@ class Kvizer
       @ssh_connections = { }
     end
 
+    # long hostname breaks CLI tests
     def safe_name
-      name.gsub(/[^-a-zA-Z0-9.]/, '-')
+      name.gsub(/[^-a-zA-Z0-9.]/, '-')[0..37]
     end
 
     def ip
