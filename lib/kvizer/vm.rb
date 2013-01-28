@@ -227,6 +227,10 @@ class Kvizer
       end
     end
 
+    def restore_last_snapshot
+      restore_snapshot(snapshots.last)
+    end
+
     def delete_snapshot(snapshot_name)
       sleep 1
       host.shell! "VBoxManage snapshot \"#{name}\" delete \"#{snapshot_name}\""
