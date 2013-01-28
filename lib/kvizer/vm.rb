@@ -27,8 +27,9 @@ class Kvizer
       @ssh_connections = { }
     end
 
+    # long hostname breaks CLI tests
     def safe_name
-      name.gsub(/[^-a-zA-Z0-9.]/, '-')
+      name.gsub(/[^-a-zA-Z0-9.]/, '-')[0..37]
     end
 
     def ip
@@ -216,7 +217,7 @@ class Kvizer
 
     def restore_snapshot(snapshot_name)
       raise ArgumentError, "No snapshot named #{snapshot_name}" unless snapshots.include? snapshot_name
-      stop_and_wait
+      power_off! if running?
       # restore state form previous job
       host.shell! "VBoxManage snapshot \"#{name}\" restore \"#{snapshot_name}\""
       # delete child snapshots
@@ -224,6 +225,10 @@ class Kvizer
         break if snapshot == snapshot_name
         delete_snapshot snapshot
       end
+    end
+
+    def restore_last_snapshot
+      restore_snapshot(snapshots.last)
     end
 
     def delete_snapshot(snapshot_name)
