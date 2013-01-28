@@ -217,7 +217,7 @@ class Kvizer
 
     def restore_snapshot(snapshot_name)
       raise ArgumentError, "No snapshot named #{snapshot_name}" unless snapshots.include? snapshot_name
-      stop_and_wait
+      power_off! if running?
       # restore state form previous job
       host.shell! "VBoxManage snapshot \"#{name}\" restore \"#{snapshot_name}\""
       # delete child snapshots
