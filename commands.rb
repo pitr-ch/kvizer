@@ -159,7 +159,7 @@ command 'ci' do
         :short => '-g', :type => :string, :default => kvizer.config.job_options.package2.source
     opt :branch, "branch to checkout",
         :short => '-b', :type => :string, :default => kvizer.config.job_options.package2.branch
-    opt :name, "Machine name", :short => '-n', :type => :string
+    opt :name, "machine name", :short => '-n', :type => :string
     opt :base, "Base for cloning", :type => :string, :default => kvizer.config.katello_base
     opt :use_koji, "Use koji for building rpms"
   end
@@ -169,5 +169,17 @@ command 'ci' do
     clone_vm kvizer.vm(@options[:base]), vm_name, 'install-packaging'
     rebuild vm_name, 'package2', 'system-test', :build_jobs,
             :package2 => { :source => @options[:git], :branch => branch, :use_koji => @options[:use_koji] }
+  end
+end
+
+command 'restore' do
+  options do
+    banner 'Restores last snapshot of machine a boots it up (it will turn it off when needed)'
+    vm_option.call self
+  end
+  run do
+    vm = get_vm
+    vm.restore_last_snapshot
+    vm.run_and_wait
   end
 end
