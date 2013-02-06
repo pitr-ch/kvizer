@@ -138,8 +138,7 @@ job 'setup-development' do
     shell! 'root', 'service pulp-server restart'
 
     # create katello db
-    waiting = 0
-    wait_for(60) { shell('root', 'service postgresql status').success } ||
+    wait_for(60) { shell('root', 'netstat -ln | grep -q ":5432\s"').success } ||
         raise('db is not running even after 60s')
     shell! 'root', 'su - postgres -c \'createuser -dls katello  --no-password\''
   end
