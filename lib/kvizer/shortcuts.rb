@@ -1,5 +1,5 @@
 class Kvizer
-  module Shortcuts
+  module Shortcuts # TODO this should be a parent not a module
     def host
       kvizer.host
     end
