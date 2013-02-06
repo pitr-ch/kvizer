@@ -24,7 +24,7 @@ job 'install-htop' do
   end
 end
 
-job 'install-katello' do
+job 'add-katello-repo' do
   online do
     system = case
              when vm.fedora?
@@ -36,18 +36,21 @@ job 'install-katello' do
              end
 
     url = options[:repositories][system][options[:product].to_sym][options[:version]]
-
     case options[:product]
-      when 'katello'
-        shell! 'root', "rpm -Uvh #{url}"
-        yum_install 'katello-repos-testing' if options[:version] == :latest
-        yum_install 'katello-all'
-      when 'cfse'
-        yum_add_repo options[:repositories][system][options[:product].to_sym][options[:version]]
-        yum_install 'katello-all'
-      else
-        raise "Unsupported product #{options[:product]}"
+    when 'katello'
+      shell! 'root', "rpm -Uvh #{url}"
+      yum_install 'katello-repos-testing' if options[:version] == :latest
+    when 'cfse'
+      vm.shell! 'root', "yum-config-manager --add-repo  #{url}"
+    else
+      raise "Unsupported product #{options[:product]}"
     end
+  end
+end
+
+job 'install-katello' do
+  online do
+    yum_install 'katello-all'
   end
 end
 
@@ -162,11 +165,6 @@ job 'package2' do # TODO rename to package
     shell! 'user', "git clone #{options[:source]} katello-build-source"
     shell! 'user', "cd katello-build-source; git checkout #{options[:branch]}"
 
-    shell! 'root',
-           #"rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-1.3.1-1.fc16.noarch.rpm"
-           # latest links to 1.2, use above variant when you encounter problems
-           "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
-    yum_install "katello-repos-testing"
     yum_install "puppet" # workaround for missing puppet user when puppet is installed by yum-builddep
 
     store_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"

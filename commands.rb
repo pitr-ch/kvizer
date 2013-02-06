@@ -124,12 +124,12 @@ command 'build-base' do
     vm_option.call self, 'Name of a clean installation'
     opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
     opt :product, "Product to install ", :short => '-p', :type => :string,
-        :required => false, :default => kvizer.config.job_options.send('install-katello').product
+        :required => false, :default => kvizer.config.job_options.send('add-katello-repo').product
   end
   run do
     clone_vm(get_vm, @options[:name], 'clean-installation')
     rebuild @options[:name], 'base', nil, :base_jobs,
-            :"install-katello" => { :product => @options[:product] }
+            :"add-katello-repo" => { :product => @options[:product] }
   end
 end
 
@@ -166,7 +166,7 @@ command 'ci' do
   run do
     branch  = @options[:branch] || kvizer.config.job_options.package2.branch
     vm_name = @options[:name] || "ci-#{branch}"
-    clone_vm kvizer.vm(@options[:base]), vm_name, 'install-packaging'
+    clone_vm kvizer.vm(@options[:base]), vm_name, 'add-katello-repo'
     rebuild vm_name, 'package2', 'system-test', :build_jobs,
             :package2 => { :source => @options[:git], :branch => branch, :use_koji => @options[:use_koji] }
   end
