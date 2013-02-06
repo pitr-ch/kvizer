@@ -1,4 +1,4 @@
-job 'clean installation'
+job 'clean-installation'
 
 job 'base' do
   offline do

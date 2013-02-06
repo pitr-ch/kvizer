@@ -54,7 +54,7 @@
 
 # job collections
 :base_jobs:
-- clean installation
+- clean-installation
 - base
 - update
 - add-user
