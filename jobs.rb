@@ -138,7 +138,7 @@ job 'setup-development' do
     # reset oauth
     shell! 'user', "sudo #{config.katello_path}/src/script/reset-oauth shhhh"
     shell('root', 'service tomcat6 restart').success or shell!('root', 'service tomcat6 start')
-    shell! 'root', 'service pulp-server restart'
+    # shell! 'root', 'service pulp-server restart'  FIXME
 
     # create katello db
     wait_for(60) { shell('root', 'netstat -ln | grep -q ":5432\s"').success } ||
@@ -259,7 +259,7 @@ job 'relax-security' do
         "candlepin.auth.oauth.consumer.katello.secret = shhhh/' /etc/candlepin/candlepin.conf"
     shell! 'root', "sed -i 's/^.*oauth_secret: .*/    oauth_secret: shhhh/' /etc/katello/katello.yml"
 
-    shell 'root', 'service pulp-server restart'
+    #shell 'root', 'service pulp-server restart' FIXME
     shell 'root', 'service tomcat6 restart'
     shell 'root', 'service elasticsearch restart'
     shell 'root', 'service postgresql restart'
