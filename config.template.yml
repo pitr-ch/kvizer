@@ -64,6 +64,7 @@
 - install-packaging
 - install-katello
 - configure-katello
+- disable-selinux
 - turnoff-services
 - relax-security
 - setup-development
