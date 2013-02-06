@@ -24,6 +24,12 @@ job 'install-htop' do
   end
 end
 
+job 'disable-selinux' do
+  online do
+    shell 'root', 'sed "s/SELINUX=.*/SELINUX=disabled/" -i /etc/selinux/config'
+  end
+end
+
 job 'install-katello' do
   online do
     system = case
@@ -40,6 +46,7 @@ job 'install-katello' do
     case options[:product]
       when 'katello'
         shell! 'root', "rpm -Uvh #{url}"
+        shell 'root', 'service iptables stop'
         yum_install 'katello-repos-testing' if options[:version] == :latest
         yum_install 'katello-all'
       when 'cfse'
@@ -57,7 +64,6 @@ end
 
 job 'turnoff-services' do
   online do
-    shell! 'root', 'setenforce 0'
     shell! 'root', 'service iptables stop'
     shell! 'root', 'service katello stop'
     shell! 'root', 'service katello-jobs stop'
@@ -141,7 +147,10 @@ job 'setup-development' do
     waiting = 0
     wait_for(60) { shell('root', 'service postgresql status').success } ||
         raise('db is not running even after 60s')
-    shell! 'root', 'su - postgres -c \'createuser -dls katello  --no-password\''
+    shell! 'root', "su - postgres -c 'createuser -dls katello  --no-password'"
+    # only if /var/lib/pgsql/data was created from scratch
+    # shell! 'root', "su - postgres -c 'createuser -dls candlepin  --no-password'"
+    # shell! ... katelo reset dbs
   end
 end
 
@@ -241,6 +250,11 @@ end
 
 job 'relax-security' do
   online do
+    # TODO only if /var/lib/pgsql/data - causes candlepin db problems (must create again and reset it
+    ## create new empty db structure - fedora 17 does not created during pg installation
+    #shell('root', 'rm -rf /var/lib/pgsql/data')
+    #shell('root', 'su - postgres -c "initdb -D /var/lib/pgsql/data"')
+
     # allow incoming connections to postgresql
     unless shell('root', 'cat /var/lib/pgsql/data/pg_hba.conf | grep "192.168.25.0/24"').success
       shell! 'root',

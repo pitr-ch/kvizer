@@ -29,7 +29,8 @@ class Kvizer
 
     # long hostname breaks CLI tests
     def safe_name
-      name.gsub(/[^-a-zA-Z0-9.]/, '-')[0..37]
+      safe = name.gsub(/[^-a-zA-Z0-9.]/, '-')[0..27]
+      safe[-1..-1] != '-' ? safe : safe[0..-2]
     end
 
     def ip
