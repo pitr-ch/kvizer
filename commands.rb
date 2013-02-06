@@ -119,7 +119,7 @@ end
 
 command 'build-base' do
   options do
-    banner "Creates base developing machine from vm with clean installation of a system. This image is then used" +
+    banner "Creates base developing machine from vm with clean-installation of a system. This image is then used" +
                "for cloning development machines or to ru ci commands."
     vm_option.call self, 'Name of a clean installation'
     opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
@@ -127,7 +127,7 @@ command 'build-base' do
         :required => false, :default => kvizer.config.job_options.send('install-katello').product
   end
   run do
-    clone_vm(get_vm, @options[:name], 'clean installation')
+    clone_vm(get_vm, @options[:name], 'clean-installation')
     rebuild @options[:name], 'base', nil, :base_jobs,
             :"install-katello" => { :product => @options[:product] }
   end
