@@ -171,10 +171,11 @@ job 'package2' do # TODO rename to package
     shell! 'user', "mkdir -p #{store_dir}"
 
     spec_dirs = %w(src cli katello-configure katello-utils repos selinux/katello-selinux scripts/system-test)
+    dist      = vm.fedora? ? '.fc16' : '.el6'
 
     logger.info "building src.rpms"
-    src_rpms = spec_dirs.inject({ }) do |hash, dir|
-      result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=.fc16"
+    src_rpms = spec_dirs.inject({}) do |hash, dir|
+      result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=#{dist}"
       result.out =~ /^Wrote: (.*src\.rpm)$/
       srpm_file = $1
       shell! 'user', "cp #{srpm_file} #{store_dir}"
@@ -183,9 +184,10 @@ job 'package2' do # TODO rename to package
 
     rpms = if options[:use_koji]
              logger.info "building rpms in Koji"
-             task_ids = spec_dirs.inject({ }) do |hash, dir|
+             task_ids = spec_dirs.inject({}) do |hash, dir|
+               tag    = vm.fedora? ? 'katello-nightly-fedora16' : 'katello-nightly-rhel6'
                result = shell! 'user',
-                               "koji -c ~/.koji/katello-config build --scratch katello-nightly-fedora16 #{src_rpms[dir]}"
+                               "koji -c ~/.koji/katello-config build --scratch #{tag} #{src_rpms[dir]}"
                hash.update dir => /^Created task: (\d+)$/.match(result.out)[1]
              end
 
@@ -202,7 +204,7 @@ job 'package2' do # TODO rename to package
              logger.info "building rpms locally"
              spec_dirs.map do |dir|
                shell! 'root', "yum-builddep -y #{src_rpms[dir]}"
-               result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.fc16"
+               result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.#{dist}"
                result.out =~ /Successfully built: (.*)\Z/
                $1.split(/\s/).tap do |rpms|
                  shell! 'user', "cp #{rpms.join(' ')} #{store_dir}"
