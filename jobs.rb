@@ -163,7 +163,7 @@ end
 job 'package2' do # TODO rename to package
   online do
     shell! 'user', "git clone #{options[:source]} katello-build-source"
-    shell! 'user', "cd katello-build-source; git checkout #{options[:branch]}"
+    shell! 'user', "cd katello-build-source; git checkout --track origin/#{options[:branch]}"
 
     yum_install "puppet" # workaround for missing puppet user when puppet is installed by yum-builddep
 
