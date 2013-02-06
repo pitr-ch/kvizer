@@ -24,7 +24,7 @@ job 'install-htop' do
   end
 end
 
-job 'install-katello' do
+job 'add-katello-repo' do
   online do
     system = case
              when vm.fedora?
@@ -36,18 +36,21 @@ job 'install-katello' do
              end
 
     url = options[:repositories][system][options[:product].to_sym][options[:version]]
-
     case options[:product]
-      when 'katello'
-        shell! 'root', "rpm -Uvh #{url}"
-        yum_install 'katello-repos-testing' if options[:version] == :latest
-        yum_install 'katello-all'
-      when 'cfse'
-        yum_add_repo options[:repositories][system][options[:product].to_sym][options[:version]]
-        yum_install 'katello-all'
-      else
-        raise "Unsupported product #{options[:product]}"
+    when 'katello'
+      shell! 'root', "rpm -Uvh #{url}"
+      yum_install 'katello-repos-testing' if options[:version] == :latest
+    when 'cfse'
+      vm.shell! 'root', "yum-config-manager --add-repo  #{url}"
+    else
+      raise "Unsupported product #{options[:product]}"
     end
+  end
+end
+
+job 'install-katello' do
+  online do
+    yum_install 'katello-all'
   end
 end
 
@@ -135,11 +138,10 @@ job 'setup-development' do
     # reset oauth
     shell! 'user', "sudo #{config.katello_path}/src/script/reset-oauth shhhh"
     shell('root', 'service tomcat6 restart').success or shell!('root', 'service tomcat6 start')
-    shell! 'root', 'service pulp-server restart'
+    shell! 'root', 'service httpd restart'
 
     # create katello db
-    waiting = 0
-    wait_for(60) { shell('root', 'service postgresql status').success } ||
+    wait_for(60) { shell('root', 'netstat -ln | grep -q ":5432\s"').success } ||
         raise('db is not running even after 60s')
     shell! 'root', 'su - postgres -c \'createuser -dls katello  --no-password\''
   end
@@ -161,23 +163,19 @@ end
 job 'package2' do # TODO rename to package
   online do
     shell! 'user', "git clone #{options[:source]} katello-build-source"
-    shell! 'user', "cd katello-build-source; git checkout #{options[:branch]}"
+    shell! 'user', "cd katello-build-source; git checkout --track origin/#{options[:branch]}"
 
-    shell! 'root',
-           #"rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-1.3.1-1.fc16.noarch.rpm"
-           # latest links to 1.2, use above variant when you encounter problems
-           "rpm -Uvh http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
-    yum_install "katello-repos-testing"
     yum_install "puppet" # workaround for missing puppet user when puppet is installed by yum-builddep
 
     store_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
     shell! 'user', "mkdir -p #{store_dir}"
 
     spec_dirs = %w(src cli katello-configure katello-utils repos selinux/katello-selinux scripts/system-test)
+    dist      = vm.fedora? ? '.fc16' : '.el6'
 
     logger.info "building src.rpms"
-    src_rpms = spec_dirs.inject({ }) do |hash, dir|
-      result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=.fc16"
+    src_rpms = spec_dirs.inject({}) do |hash, dir|
+      result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=#{dist}"
       result.out =~ /^Wrote: (.*src\.rpm)$/
       srpm_file = $1
       shell! 'user', "cp #{srpm_file} #{store_dir}"
@@ -186,9 +184,10 @@ job 'package2' do # TODO rename to package
 
     rpms = if options[:use_koji]
              logger.info "building rpms in Koji"
-             task_ids = spec_dirs.inject({ }) do |hash, dir|
+             task_ids = spec_dirs.inject({}) do |hash, dir|
+               tag    = vm.fedora? ? 'katello-nightly-fedora16' : 'katello-nightly-rhel6'
                result = shell! 'user',
-                               "koji -c ~/.koji/katello-config build --scratch katello-nightly-fedora16 #{src_rpms[dir]}"
+                               "koji -c ~/.koji/katello-config build --scratch #{tag} #{src_rpms[dir]}"
                hash.update dir => /^Created task: (\d+)$/.match(result.out)[1]
              end
 
@@ -205,7 +204,7 @@ job 'package2' do # TODO rename to package
              logger.info "building rpms locally"
              spec_dirs.map do |dir|
                shell! 'root', "yum-builddep -y #{src_rpms[dir]}"
-               result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.fc16"
+               result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.#{dist}"
                result.out =~ /Successfully built: (.*)\Z/
                $1.split(/\s/).tap do |rpms|
                  shell! 'user', "cp #{rpms.join(' ')} #{store_dir}"
@@ -257,12 +256,12 @@ job 'relax-security' do
     shell! 'root', "sed -i 's/^.*network.host.*/network.host: 0.0.0.0/' #{el_config}"
 
     # reset katello secret to "katello"
-    shell! 'root', "sed -i 's/^.*oauth_secret: .*/oauth_secret: shhhh/' /etc/pulp/pulp.conf"
+    shell! 'root', "sed -i 's/^.*oauth_secret: .*/oauth_secret: shhhh/' /etc/pulp/server.conf"
     shell! 'root', "sed -i 's/^.*candlepin.auth.oauth.consumer.katello.secret =.*/" +
         "candlepin.auth.oauth.consumer.katello.secret = shhhh/' /etc/candlepin/candlepin.conf"
     shell! 'root', "sed -i 's/^.*oauth_secret: .*/    oauth_secret: shhhh/' /etc/katello/katello.yml"
 
-    shell 'root', 'service pulp-server restart'
+    shell 'root', 'service httpd restart'
     shell 'root', 'service tomcat6 restart'
     shell 'root', 'service elasticsearch restart'
     shell 'root', 'service postgresql restart'
