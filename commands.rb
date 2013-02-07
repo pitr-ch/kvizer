@@ -165,7 +165,7 @@ command 'ci' do
   end
   run do
     branch  = @options[:branch] || kvizer.config.job_options.package2.branch
-    vm_name = @options[:name] || "ci-#{branch}"
+    vm_name = @options[:name] || "ci-#{branch}#{'-koji' if @options[:use_koji]}"
     clone_vm kvizer.vm(@options[:base]), vm_name, 'add-katello-repo'
     rebuild vm_name, 'package2', 'system-test', :build_jobs,
             :package2 => { :source => @options[:git], :branch => branch, :use_koji => @options[:use_koji] }
