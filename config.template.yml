@@ -62,6 +62,7 @@
 - setup-shared-folders
 - install-htop
 - install-packaging
+- add-katello-repo
 - install-katello
 - configure-katello
 - disable-selinux
@@ -69,7 +70,7 @@
 - relax-security
 - setup-development
 :build_jobs:
-- install-packaging
+- add-katello-repo
 - package2
 - reconfigure-katello
 - system-test
@@ -80,7 +81,7 @@
     :source: /home/user/redhat/katello
     :branch: master
     :use_koji: false
-  :install-katello:
+  :add-katello-repo:
     :repositories:
       :fedora:
         :katello:
