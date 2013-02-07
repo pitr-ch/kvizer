@@ -24,7 +24,7 @@ Bugs, planed enhancements, questions can be found on [github issues](https://git
     -   `kvizer/support` for builds and other shared files
 -   platform independent-ish (*nix systems only)
     -   based on VirtualBox
--   its all Ruby
+-   its Ruby :)
 
 ## Architecture
 
@@ -94,16 +94,7 @@ _RHEL support is experimental._
             -   Servers/SystemAdministrationTools
 -   post install
     -   run `dhclient eth0` to connecto to the network
-    -   add a RHEL repository
-
-            cat /etc/yum.repos.d/redhat.repo
-            [rhel]
-            name=Red Hat Enterprise Linux 6.3 - $basearch
-            baseurl=<repository for RHEL 6.3 Server>
-            enabled=1
-            gpgcheck=1
-            gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
-
+    -   add a RHEL repositories (ping me if you need more information)
     -   run `yum install NetworkManager` to get network working
 -   power down and create snapshot "clean-installation"
 
