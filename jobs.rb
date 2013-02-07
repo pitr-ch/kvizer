@@ -214,7 +214,7 @@ job 'package2' do # TODO rename to package
              logger.info "building rpms locally"
              spec_dirs.map do |dir|
                shell! 'root', "yum-builddep -y #{src_rpms[dir]}"
-               result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=.#{dist}"
+               result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=#{dist}"
                result.out =~ /Successfully built: (.*)\Z/
                $1.split(/\s/).tap do |rpms|
                  shell! 'user', "cp #{rpms.join(' ')} #{store_dir}"
