@@ -26,6 +26,8 @@ Bugs, planed enhancements, questions can be found on [github issues](https://git
     -   based on VirtualBox
 -   its Ruby :)
 
+Run `kvizer --help` to see all the available commands.
+
 ## Architecture
 
 All machines have access to outside world via NAT network. They are also placed on a private network created by Kvizer which is used to ssh connections.
