@@ -59,7 +59,7 @@ There are three shared folders: `redhat`, `remote_bin` and `support`.
 ### Dependencies
 
 -   latest VirtualBox > 4.2.4
--   arp-scanf
+-   arp-scan
 
 ### Create katello base image
 
@@ -111,7 +111,7 @@ _RHEL support is experimental._
 -   copy `support/koji/katello-config.template` to `support/koji/katello-config`
 -   copy your certificate for koji to `support/koji/`, e.g. `support/koji/pchalupa.pem`
 -   update path to this certificate in `support/koji/katello-config`
--   now you can build in koji with kvizer from its machines
+-   now you can build in koji with kvizer with virtual machines
 
 ### Creating base image
 
