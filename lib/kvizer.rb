@@ -5,6 +5,7 @@ require 'pp'
 require 'log4r'
 require 'net/ssh'
 require 'pry'
+require 'notifier'
 
 lib_path = File.expand_path(File.join(File.dirname(__FILE__)))
 $: << lib_path unless $:.include? lib_path
@@ -76,5 +77,11 @@ class Kvizer
     end.jobs
   end
 
+  def config
+    @config ||=
+        ConfigNode.new(YAML.load_file("#{root}/config.yml")).tap do |config|
+          config.deep_merge! YAML.load_file(File.expand_path(config.config_overide, root)) if config.config_overide
+        end
+  end
 
 end
