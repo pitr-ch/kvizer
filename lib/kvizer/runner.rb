@@ -76,6 +76,10 @@ class Kvizer
     def run
       kvizer.logger.info @cli
       instance_eval &@command.run
+      if kvizer.config.notified_commands.include?(@command.name)
+        Notifier.notify :title => "Kvizer status",
+                        :message => "Kvizer command '#{$0} #{@cli}' finished"
+      end
       self
     end
 
