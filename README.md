@@ -1,5 +1,9 @@
 # Kvizer
 
+## Current status
+
+See [wiki page](https://github.com/pitr-ch/kvizer/wiki)
+
 ## About
 
 This little tool should help you with katello development. It makes virtual machines configuration easy. It's basically a wrapper around virtual box with some useful tools.
