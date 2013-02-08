@@ -3,6 +3,7 @@ job 'clean-installation'
 job 'base' do
   offline do
     host.setup_private_network
+    vm.setup_nat_network
     vm.setup_private_network
   end
   online do

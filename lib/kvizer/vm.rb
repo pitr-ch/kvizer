@@ -277,6 +277,13 @@ class Kvizer
       end
     end
 
+    def setup_nat_network
+      raise if running?
+      # use host's resolver, see http://www.virtualbox.org/manual/ch09.html#nat-adv-dns
+      # fixes url resolving when connected to VPN
+      host.shell! %(VBoxManage modifyvm "#{name}" --natdnshostresolver1 on)
+    end
+
     def setup_resources(ram_megabytes, cpus)
       raise if running?
       host.shell! "VBoxManage modifyvm \"#{name}\" --cpus #{cpus} --memory #{ram_megabytes}"
