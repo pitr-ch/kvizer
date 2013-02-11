@@ -23,8 +23,8 @@ class Kvizer
     attr_reader :sub_commands
 
     def initialize()
-      @commands = { }
-      @cli = ARGV.clone.join(' ')
+      @commands = {}
+      @cli      = ARGV.clone.join(' ')
       define_commands
     end
 
@@ -76,14 +76,24 @@ class Kvizer
     def run
       kvizer.logger.info @cli
       instance_eval &@command.run
-      if kvizer.config.notified_commands.include?(@command.name)
-        Notifier.notify :title => "Kvizer status",
-                        :message => "Kvizer command '#{$0} #{@cli}' finished"
-      end
       self
+    rescue => e
+      notify false
+      raise e
+    else
+      notify true
     end
 
     private
+
+    def notify(status)
+      if kvizer.config.notified_commands.include?(@command.name)
+        Notifier.notify :title   => "Kvizer #{status ? 'OK' : 'FAILED'}",
+                        :message => "kvizer #{@cli}"
+      end
+    rescue => e
+      kvizer.logger.warn "notification failed: #{e.message} (#{e.class})"
+    end
 
     def get_vm
       kvizer.vm(@options[:vm]).tap { |vm| Trollop::die :vm, "could not find VM" unless vm }
