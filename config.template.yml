@@ -15,6 +15,11 @@
 :commands_paths:
 - commands.rb
 
+:notified_commands:
+- build
+- build-base
+- ci
+
 # additional config file which is deep merged with this one default
 :config_overide:
 
