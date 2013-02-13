@@ -74,7 +74,7 @@
 - turnoff-services
 - relax-security
 - setup-development
-:build_jobs:
+:ci_jobs:
 - add-katello-repo
 - package2
 - reconfigure-katello
