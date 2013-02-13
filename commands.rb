@@ -2,11 +2,11 @@
 
 def self.rebuild(vm_name, start_job_name, finish_job_name, collection_name = :base_jobs, job_options = { })
   collection = Kvizer::Jobs::Collection.new_by_names kvizer, *kvizer.config.send(collection_name)
-  job = collection[start_job_name] rescue Trollop::die(:job, "could not find job with name '#{start_job_name}'")
+  job = collection[start_job_name] rescue die(:job, "could not find job with name '#{start_job_name}'")
 
   last_job = collection[finish_job_name] rescue nil
   if last_job.nil? && finish_job_name
-    Trollop::die(:finish_job, "could not find job with name'#{finish_job_name}'")
+    die(:finish_job, "could not find job with name'#{finish_job_name}'")
   end
 
   kb = Kvizer::ImageBuilder.new kvizer, kvizer.vm(vm_name), collection
@@ -14,8 +14,8 @@ def self.rebuild(vm_name, start_job_name, finish_job_name, collection_name = :ba
 end
 
 def self.clone_vm(vm, name, snapshot)
-  Trollop.die :name, "is required, was '#{name}'" if name.nil? || name.empty?
-  Trollop.die :snapshot, "could not find snapshot #{snapshot}" unless vm.snapshots.include?(snapshot)
+  die :name, "is required, was '#{name}'" if name.nil? || name.empty?
+  die :snapshot, "could not find snapshot #{snapshot}" unless vm.snapshots.include?(snapshot)
 
   vm.clone_vm(name, snapshot)
 end
@@ -83,7 +83,7 @@ command 'ssh' do
     vm_option.call self
   end
   run do
-    Trollop::die :user, "user is required" unless @options[:user]
+    die :user, "user is required" unless @options[:user]
     get_vm.connect(@options[:user])
   end
 end
@@ -144,7 +144,7 @@ command 'execute' do
   run do
     job = kvizer.job_definitions[@options[:job]]
     unless job
-      Trollop.die :job, "'#{@options[:job]}' could not find a job, avaliable:\n  " +
+      die :job, "'#{@options[:job]}' could not find a job, avaliable:\n  " +
           "#{kvizer.job_definitions.keys.join("\n  ")}"
     end
     get_vm.run_job job, @options[:options] ? eval(@options[:options]) : { }
