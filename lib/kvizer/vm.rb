@@ -191,10 +191,7 @@ class Kvizer
       end
     end
 
-    # TODO add class for snapshot, fix broken deletion of snapshots with manual
-    # hdd deletion
-    # VBoxManage list hdds to find child disks and delete them
-    # add methods for restore, delete, take
+    # TODO add class for snapshot
     def snapshots
       out = host.shell!("VBoxManage snapshot \"#{name}\" list").out
       out.each_line.map do |line|
