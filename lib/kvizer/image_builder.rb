@@ -1,16 +1,15 @@
 class Kvizer
-  class ImageBuilder
-    include Shortcuts
+  class ImageBuilder < Abstract
+    attr_reader :vm, :collection, :logger
 
-    attr_reader :kvizer, :vm, :collection, :logger
     def initialize(kvizer, vm, collection)
-      @kvizer     = kvizer
+      super kvizer
       @vm         = vm
       @collection = collection
-      @logger     = kvizer.logging["image-builder"]
+      @logger     = logging["image-builder"]
     end
 
-    def rebuild(job_name, last_job = nil, options = { })
+    def rebuild(job_name, last_job = nil, options = {})
       logger.info "rebuilding #{job_name}..#{last_job ? last_job.name : ''} with options #{options.inspect}"
       job      = collection[job_name]
       previous = collection.previous_job(job)
@@ -27,7 +26,7 @@ class Kvizer
       return unless job
       logger.info "step #{job.name}"
 
-      vm.run_job job, options.fetch(job.name.to_sym, { })
+      vm.run_job job, options.fetch(job.name.to_sym, {})
 
       vm.take_snapshot job.name
       step collection.next_job(job), last_job, options unless job == last_job

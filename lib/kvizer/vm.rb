@@ -2,7 +2,7 @@ require 'socket'
 require 'timeout'
 
 class Kvizer
-  class VM
+  class VM < Abstract
     class LinePrinter
       def initialize(&printer)
         @printer = printer
@@ -18,13 +18,13 @@ class Kvizer
       end
     end
 
-    include Shortcuts
-    attr_reader :kvizer, :name, :logger
+    attr_reader :name, :logger
 
     def initialize(kvizer, name)
-      @kvizer, @name   = kvizer, name
-      @logger          = kvizer.logging[name]
-      @ssh_connections = { }
+      super kvizer
+      @name            = name
+      @logger          = logging[name]
+      @ssh_connections = {}
     end
 
     # long hostname breaks CLI tests
@@ -53,15 +53,15 @@ class Kvizer
       guest_os =~ /Red Hat/
     end
 
-    def shell(user, cmd, options = { })
+    def shell(user, cmd, options = {})
       logger.info "sh@#{user}$ #{cmd}"
 
-      stdout_data = ""
-      stderr_data = ""
-      exit_code   = nil
-      exit_signal = nil
-      final_success   = nil
-      ssh         = ssh_connection user, options[:password]
+      stdout_data   = ""
+      stderr_data   = ""
+      exit_code     = nil
+      exit_signal   = nil
+      final_success = nil
+      ssh           = ssh_connection user, options[:password]
 
       ssh.open_channel do |channel|
         channel.exec(cmd) do |ch, success|
@@ -94,7 +94,7 @@ class Kvizer
       return ShellOutResult.new(final_success, stdout_data, stderr_data)
     end
 
-    def shell!(user, cmd, options = { })
+    def shell!(user, cmd, options = {})
       result = shell user, cmd, options
       raise CommandFailed, "cmd failed: #{cmd}\nerr:\n#{result.err}" unless result.success
       result
@@ -161,10 +161,10 @@ class Kvizer
 
     def status_of_ssh
       timeout(5) { TCPSocket.open(ip, 22).close || true }
-      rescue Timeout::Error
-        false
-      rescue Errno::ECONNREFUSED
-        false
+    rescue Timeout::Error
+      false
+    rescue Errno::ECONNREFUSED
+      false
     end
 
     def status
@@ -172,7 +172,7 @@ class Kvizer
       box_status = !!(result =~ /"#{name}"/)
       if ip
         ping_status = host.shell("ping -c 1 -W 5 #{ip}").success
-        ssh_status = status_of_ssh
+        ssh_status  = status_of_ssh
       else
         ping_status = ssh_status = false
       end
@@ -299,7 +299,7 @@ class Kvizer
       end
     end
 
-    def run_job(job, options = { })
+    def run_job(job, options = {})
       raise ArgumentError, "not a job #{job.inspect}" unless job.kind_of? Kvizer::Jobs::Job
       job.run self, options
     end

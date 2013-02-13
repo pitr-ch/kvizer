@@ -19,8 +19,8 @@ class Kvizer
   class CommandFailed < StandardError
   end
 
-  require 'kvizer/shortcuts'
-  require 'kvizer/config'
+  require 'kvizer/abstract'
+  require 'kvizer/config_node'
   require 'kvizer/vm'
   require 'kvizer/info_parser'
   require 'kvizer/host'
