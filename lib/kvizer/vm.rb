@@ -262,6 +262,14 @@ class Kvizer
       exec cmd
     end
 
+    def tunnel(user)
+      run_and_wait
+      cmd = "sudo ssh -L 443:localhost:443 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no #{user}@#{ip}"
+      logger.info "tunelling: #{cmd}"
+      logger.info "logout will destroy the tunnel"
+      exec cmd
+    end
+
     def to_s
       "#<Kvizer::VM #{name} ip:#{ip.inspect} mac:#{mac.inspect}>"
     end
