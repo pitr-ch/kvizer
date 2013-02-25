@@ -64,7 +64,7 @@ job 'install-katello' do
 end
 
 job 'configure-katello' do
-  online { shell! 'root', 'katello-configure --no-bars' }
+  online { shell! 'root', 'katello-configure --no-bars --user-pass admin' }
 end
 
 job 'turnoff-services' do
