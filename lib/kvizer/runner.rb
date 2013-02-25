@@ -20,12 +20,13 @@ class Kvizer
       end
     end
 
-    attr_reader :sub_commands
+    attr_reader :sub_commands, :logger
 
     def initialize()
-      @commands = { }
-      @cli = ARGV.clone.join(' ')
+      @commands = {}
+      @cli      = ARGV.clone.join(' ')
       define_commands
+      @logger = kvizer.logging['runner']
     end
 
     def command name, &define
@@ -38,6 +39,17 @@ class Kvizer
 
     def shift
       ARGV.shift
+    end
+
+    def die(option_name_or_message, maybe_message = nil)
+      option_name, message = if maybe_message
+                                 [option_name_or_message, maybe_message]
+                               else
+                                 [nil, option_name_or_message]
+                               end
+      logger.error "#{"option: '#{option_name}': " if option_name}#{message}"
+      logger.error "Try --help for help."
+      exit 1
     end
 
     def parse
@@ -67,7 +79,7 @@ class Kvizer
       end
 
       @command = @commands[name = shift] # get the subcommand
-      Trollop::die "unknown subcommand #{name}" unless @command
+      die "unknown subcommand #{name}" unless @command
 
       @options = Trollop::options &@command.options
       self
@@ -76,17 +88,27 @@ class Kvizer
     def run
       kvizer.logger.info @cli
       instance_eval &@command.run
-      if kvizer.config.notified_commands.include?(@command.name)
-        Notifier.notify :title => "Kvizer status",
-                        :message => "Kvizer command '#{$0} #{@cli}' finished"
-      end
       self
+    rescue => e
+      notify false
+      raise e
+    else
+      notify true
     end
 
     private
 
+    def notify(status)
+      if kvizer.config.notified_commands.include?(@command.name)
+        Notifier.notify :title   => "Kvizer #{status ? 'OK' : 'FAILED'}",
+                        :message => "kvizer #{@cli}"
+      end
+    rescue => e
+      kvizer.logger.warn "notification failed: #{e.message} (#{e.class})"
+    end
+
     def get_vm
-      kvizer.vm(@options[:vm]).tap { |vm| Trollop::die :vm, "could not find VM" unless vm }
+      kvizer.vm(@options[:vm]).tap { |vm| die :vm, "could not find VM" unless vm }
     end
 
     def define_commands

@@ -1,10 +1,9 @@
 class Kvizer
-  class InfoParser
-    include Shortcuts
-    attr_reader :kvizer, :raw_attributes, :attributes
+  class InfoParser < Abstract
+    attr_reader :raw_attributes, :attributes
 
     def initialize(kvizer)
-      @kvizer = kvizer
+      super kvizer
       reload
     end
 
@@ -43,13 +42,13 @@ class Kvizer
     def reload_raw_attributes(system_strings)
       @raw_attributes = system_strings.map do |system_string|
         attribute_string = system_string.split(/\n\n/, 2).first
-        attribute_string.each_line.inject({ }) do |hash, line|
+        attribute_string.each_line.inject({}) do |hash, line|
           line =~ /^([^:]+):\s+(.+)$/
           k, v    = $1, $2
           hash[k] = parse_nic k, v
           hash
         end
-      end.inject({ }) do |hash, attributes|
+      end.inject({}) do |hash, attributes|
         hash[attributes['Name']] = attributes
         hash
       end
@@ -58,13 +57,13 @@ class Kvizer
     def reload_attributes
       mac_ip_map = get_mac_ip_map
 
-      @attributes = raw_attributes.values.inject({ }) do |hash, raw_attributes|
+      @attributes = raw_attributes.values.inject({}) do |hash, raw_attributes|
         name       = raw_attributes['Name']
         guest_os   = raw_attributes['Guest OS']
-        hash[name] = { :name => name,
+        hash[name] = { :name     => name,
                        :guest_os => guest_os,
-                       :mac  => mac = find_mac(raw_attributes, config.hostonly.name),
-                       :ip   => mac_ip_map[mac] }
+                       :mac      => mac = find_mac(raw_attributes, config.hostonly.name),
+                       :ip       => mac_ip_map[mac] }
         hash
       end
     end
@@ -77,9 +76,9 @@ class Kvizer
     def get_mac_ip_map
       result = host.shell(cmd = "sudo arp-scan --interface=#{config.hostonly.name} " +
           "#{config.hostonly.dhcp.lower_ip}-#{config.hostonly.dhcp.upper_ip}")
-      return { } unless result.success
+      return {} unless result.success
 
-      result.out.each_line.inject({ }) do |hash, line|
+      result.out.each_line.inject({}) do |hash, line|
         next hash unless line =~ /^([\d\.]+)\s+([0-9a-f:]+)/
         hash[normalize_mac $2] = $1 if $1
         hash
@@ -103,7 +102,7 @@ class Kvizer
 
     def parse_nic(key, value)
       if key =~ /NIC \d$/
-        value.split(/,\s+/).inject({ }) do |hash, pair|
+        value.split(/,\s+/).inject({}) do |hash, pair|
           k, v    = pair.split(/:\s+/)
           hash[k] = v
           hash

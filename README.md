@@ -66,6 +66,8 @@ There are three shared folders: `redhat`, `remote_bin` and `support`.
 
 -   latest VirtualBox > 4.2.4
 -   arp-scan
+-   Ruby 1.9
+-   bundler
 
 ### Create katello base image
 

@@ -1,14 +1,13 @@
 class Kvizer
-  class Host
-    include Shortcuts
-    attr_reader :kvizer, :logger
+  class Host < Abstract
+    attr_reader :logger
 
     def initialize(kvizer)
-      @kvizer = kvizer
-      @logger = kvizer.logging['host']
+      super kvizer
+      @logger = logging['host']
     end
 
-    def shell(cmd, options = { })
+    def shell(cmd, options = {})
       logger.debug "sh$ #{cmd}"
       begin
         stdout, stderr = "", ""
@@ -24,7 +23,7 @@ class Kvizer
       end
     end
 
-    def shell!(cmd, options = { })
+    def shell!(cmd, options = {})
       result = shell cmd, options
       raise "cmd failed: #{cmd}\nerr:\n#{result.err}" unless result.success
       result

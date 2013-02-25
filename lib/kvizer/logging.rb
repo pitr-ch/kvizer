@@ -1,7 +1,7 @@
 class Kvizer
-  class Logging # TODO command and pid
+  class Logging < Abstract
     class Formatter < Log4r::Formatter
-      def initialize(options = { })
+      def initialize(options = {})
         @time_format = options[:date_pattern] || '%H:%M:%S'
         @pattern     = options[:pattern] || "%s %s %20s: %s\n"
       end
@@ -47,10 +47,8 @@ class Kvizer
       end
     end
 
-    attr_reader :kvizer
-
-    def initialize(kvizer, options = { })
-      @kvizer             = kvizer
+    def initialize(kvizer)
+      super kvizer
       @colored_formatter  = new_formatter true
       @standard_formatter = new_formatter false
     end
@@ -71,23 +69,23 @@ class Kvizer
     end
 
     def stdout_outputter
-      @stdout_outputter ||= if kvizer.config.logger.print_to_stdout
+      @stdout_outputter ||= if config.logger.print_to_stdout
                               outputter           = Log4r::Outputter.stdout
                               outputter.formatter = @colored_formatter
-                              outputter.level     = kvizer.config.logger.level
+                              outputter.level     = config.logger.level
                               outputter
                             end
     end
 
     def file_outputter
-      @file_outputter ||= if kvizer.config.logger.output
-                            FileUtils.mkdir_p kvizer.config.logger.output
+      @file_outputter ||= if config.logger.output
+                            FileUtils.mkdir_p config.logger.output
                             path = File.expand_path(
-                                "#{kvizer.config.logger.output}/#{Time.now.strftime '%y.%m.%d %H.%M.%S'} #{ARGV.first}.log", kvizer.root)
+                                "#{config.logger.output}/#{Time.now.strftime '%y.%m.%d %H.%M.%S'} #{ARGV.first}.log", kvizer.root)
 
-                            outputter           = Log4r::FileOutputter.new(kvizer.config.logger.output, :filename => path)
+                            outputter           = Log4r::FileOutputter.new(config.logger.output, :filename => path)
                             outputter.formatter = @standard_formatter
-                            outputter.level     = kvizer.config.logger.level
+                            outputter.level     = config.logger.level
                             outputter
                           end
     end
