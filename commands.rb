@@ -183,3 +183,16 @@ command 'restore' do
     vm.run_and_wait
   end
 end
+
+command 'tunnel' do
+  options do
+    banner 'Creates SSH tunnel to a machine so you can access katello on https://localhost/katello'
+    opt :user, "User login", :short => "-u", :type => :string, :default => 'user'
+    vm_option.call self
+  end
+  run do
+    vm = get_vm
+    vm.run_and_wait
+    get_vm.tunnel(@options[:user])
+  end
+end
