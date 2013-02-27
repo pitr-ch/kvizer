@@ -171,19 +171,22 @@ job 'install-packaging' do
   end
 end
 
-job 'package2' do # TODO rename to package
+job 'package_prepare' do
   online do
     shell! 'user', "git clone #{options[:source]} katello-build-source"
     shell! 'user', "cd katello-build-source; git checkout -b ci-#{options[:branch]} --track origin/#{options[:branch]}"
 
     yum_install "puppet" # workaround for missing puppet user when puppet is installed by yum-builddep
+  end
+end
 
+job 'package_build_rpms' do
+  online do
     store_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
     shell! 'user', "mkdir -p #{store_dir}"
 
     spec_dirs = %w(src cli katello-configure katello-utils repos selinux/katello-selinux scripts/system-test)
     dist      = vm.fedora? ? '.fc16' : '.el6'
-
     logger.info "building src.rpms"
     src_rpms = spec_dirs.inject({}) do |hash, dir|
       result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=#{dist}"
