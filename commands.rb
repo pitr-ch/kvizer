@@ -80,11 +80,13 @@ command 'ssh' do
   options do
     banner 'SSH an user to a machine. Starts the machine if it`s not running.'
     opt :user, "User login", :short => "-u", :type => :string, :default => 'user'
+    opt :tunnel, "Creates SSH tunnel to a machine so you can access katello on https://localhost/katello",
+        :short => "-t", :default => false
     vm_option.call self
   end
   run do
     die :user, "user is required" unless @options[:user]
-    get_vm.connect(@options[:user])
+    get_vm.connect(@options[:user], @options[:tunnel])
   end
 end
 
@@ -181,18 +183,5 @@ command 'restore' do
     vm = get_vm
     vm.restore_last_snapshot
     vm.run_and_wait
-  end
-end
-
-command 'tunnel' do
-  options do
-    banner 'Creates SSH tunnel to a machine so you can access katello on https://localhost/katello'
-    opt :user, "User login", :short => "-u", :type => :string, :default => 'user'
-    vm_option.call self
-  end
-  run do
-    vm = get_vm
-    vm.run_and_wait
-    get_vm.tunnel(@options[:user])
   end
 end

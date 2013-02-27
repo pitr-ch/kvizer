@@ -252,18 +252,17 @@ class Kvizer
       sleep 1
     end
 
-    def connect(user)
+    def connect(user, ssh_tunnel = false)
       run_and_wait
-      cmd = "ssh #{user}@#{ip} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-      logger.info "connecting: #{cmd}"
-      exec cmd
-    end
 
-    def tunnel(user)
-      run_and_wait
-      cmd = "sudo ssh -L 443:localhost:443 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no #{user}@#{ip}"
-      logger.info "tunelling: #{cmd}"
-      logger.info "logout will destroy the tunnel"
+      ssh_command               = "#{'sudo ' if ssh_tunnel}ssh #{user}@#{ip}"
+      tunnel_option             = '-L 443:localhost:443'
+      ignore_known_host_options = '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+
+      cmd = [ssh_command, (tunnel_option if ssh_tunnel), ignore_known_host_options].compact.join(' ')
+
+      logger.info "connecting: #{cmd}"
+      logger.info "creating ssh tunnel, logout will destroy the tunnel" if ssh_tunnel
       exec cmd
     end
 
