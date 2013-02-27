@@ -76,15 +76,17 @@
 - setup-development
 :ci_jobs:
 - add-katello-repo
-- package2
+- package_prepare
+- package_build_rpms
 - reconfigure-katello
 - system-test
 
 # default job options
 :job_options:
-  :package2:
+  :package_prepare:
     :source: /home/user/redhat/katello
     :branch: master
+  :package_build_rpms:
     :use_koji: false
   :add-katello-repo:
     :repositories:

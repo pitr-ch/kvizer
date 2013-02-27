@@ -156,19 +156,19 @@ command 'ci' do
     banner 'It will build RPMs (locally or in Koji), install them, run katello-configuration and run system tests. ' +
                'It uses --git to clone a source (from local or remote repository) and swithes to a --branch.'
     opt :git, "url/path to git repository",
-        :short => '-g', :type => :string, :default => kvizer.config.job_options.package2.source
+        :short => '-g', :type => :string, :default => kvizer.config.job_options.package_prepare.source
     opt :branch, "branch to checkout",
-        :short => '-b', :type => :string, :default => kvizer.config.job_options.package2.branch
+        :short => '-b', :type => :string, :default => kvizer.config.job_options.package_prepare.branch
     opt :name, "machine name", :short => '-n', :type => :string
     opt :base, "Base for cloning", :type => :string, :default => kvizer.config.katello_base
     opt :use_koji, "Use koji for building rpms"
   end
   run do
-    branch  = @options[:branch] || kvizer.config.job_options.package2.branch
+    branch  = @options[:branch] || kvizer.config.job_options.package_prepare.branch
     vm_name = @options[:name] || "ci-#{branch}#{'-koji' if @options[:use_koji]}"
     clone_vm kvizer.vm(@options[:base]), vm_name, 'add-katello-repo'
-    rebuild vm_name, 'package2', 'system-test', :ci_jobs,
-            :package2 => { :source => @options[:git], :branch => branch, :use_koji => @options[:use_koji] }
+    rebuild vm_name, 'package_prepare', 'system-test', :ci_jobs,
+            :package_prepare => { :source => @options[:git], :branch => branch }, :package_build_rpms => { :use_koji => @options[:use_koji] }
   end
 end
 
