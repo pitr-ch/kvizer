@@ -1,6 +1,6 @@
 # TODO remove die form these helper methods
 
-def self.rebuild(vm_name, start_job_name, finish_job_name, collection_name = :base_jobs, job_options = { })
+def self.rebuild(vm_name, start_job_name, finish_job_name, collection_name = :base_jobs, job_options = {})
   collection = Kvizer::Jobs::Collection.new_by_names kvizer, *kvizer.config.send(collection_name)
   job = collection[start_job_name] rescue die(:job, "could not find job with name '#{start_job_name}'")
 
@@ -113,7 +113,7 @@ command 'build' do
   end
   run do
     rebuild @options[:vm], @options[:start_job], @options[:finish_job], @options[:collection].to_sym,
-            @options[:options] ? eval(@options[:options]) : { }
+            @options[:options] ? eval(@options[:options]) : {}
   end
 end
 
@@ -123,7 +123,8 @@ command 'build-base' do
                "for cloning development machines or to ru ci commands."
     vm_option.call self, 'Name of a clean installation'
     opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
-    opt :product, "Product to install ", :short => '-p', :type => :string,
+    opt :product, "Product to install ",
+        :short    => '-p', :type => :string,
         :required => false, :default => kvizer.config.job_options.send('add-katello-repo').product
   end
   run do
@@ -147,7 +148,7 @@ command 'execute' do
       die :job, "'#{@options[:job]}' could not find a job, avaliable:\n  " +
           "#{kvizer.job_definitions.keys.join("\n  ")}"
     end
-    get_vm.run_job job, @options[:options] ? eval(@options[:options]) : { }
+    get_vm.run_job job, @options[:options] ? eval(@options[:options]) : {}
   end
 end
 
@@ -185,5 +186,15 @@ command 'restore' do
     vm = get_vm
     vm.restore_last_snapshot
     vm.run_and_wait
+  end
+end
+
+command 'ip' do
+  options do
+    banner 'Return IP address of a machine'
+    vm_option.call self
+  end
+  run do
+    puts "IP(#{get_vm.ip})"
   end
 end
