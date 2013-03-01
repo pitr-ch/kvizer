@@ -130,14 +130,6 @@ job 'setup-shared-folders' do
   end
 end
 
-#class Bundle < Job
-#  def online_job
-#    shell! 'root', 'yum install -y git tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt ' +
-#        'libxslt-devel'
-#    #shell! 'user', 'cd katello/src; sudo bundle install'
-#  end
-#end
-
 job 'setup-development' do
   online do
     shell! 'root', 'rm /etc/katello/katello.yml'
