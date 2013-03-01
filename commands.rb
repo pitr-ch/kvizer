@@ -62,9 +62,7 @@ command 'delete' do
     vm_option.call self
   end
   run do
-    vm = get_vm
-    vm.power_off! if vm.running?
-    vm.delete
+    get_vm.delete
   end
 end
 

@@ -145,6 +145,7 @@ class Kvizer
     end
 
     def delete
+      power_off! if running?
       host.shell! "VBoxManage unregistervm \"#{name}\" --delete"
       kvizer.info.reload
       kvizer.vms(true)
