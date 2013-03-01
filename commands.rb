@@ -159,13 +159,17 @@ command 'ci' do
         :short => '-g', :type => :string, :default => kvizer.config.job_options.package_prepare.source
     opt :branch, "branch to checkout",
         :short => '-b', :type => :string, :default => kvizer.config.job_options.package_prepare.branch
+    opt :delete, "Delete virtual machine first if exists", :short => '-d'
     opt :name, "machine name", :short => '-n', :type => :string
     opt :base, "Base for cloning", :type => :string, :default => kvizer.config.katello_base
     opt :use_koji, "Use koji for building rpms"
   end
   run do
-    branch  = @options[:branch] || kvizer.config.job_options.package_prepare.branch
-    vm_name = @options[:name] || "ci-#{branch}#{'-koji' if @options[:use_koji]}"
+    branch       = @options[:branch] || kvizer.config.job_options.package_prepare.branch
+    vm_name      = @options[:name] || "ci-#{branch}#{'-koji' if @options[:use_koji]}"
+    vm_to_delete = kvizer.vm(vm_name)
+
+    vm_to_delete.delete if @options[:delete] && vm_to_delete
     clone_vm kvizer.vm(@options[:base]), vm_name, 'add-katello-repo'
     rebuild vm_name, 'package_prepare', 'system-test', :ci_jobs,
             :package_prepare => { :source => @options[:git], :branch => branch }, :package_build_rpms => { :use_koji => @options[:use_koji] }
