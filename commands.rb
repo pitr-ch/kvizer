@@ -188,13 +188,3 @@ command 'restore' do
     vm.run_and_wait
   end
 end
-
-command 'ip' do
-  options do
-    banner 'Return IP address of a machine'
-    vm_option.call self
-  end
-  run do
-    puts "IP(#{get_vm.ip})"
-  end
-end
