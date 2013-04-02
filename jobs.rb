@@ -183,10 +183,8 @@ end
 
 job 'package_build_rpms' do
   online do
-    yum_install %w(scl-utils scl-utils-build spec2scl) # not necessary when using new bases
-    rpms = options[:extra_packages]
-    yum_install rpms unless rpms.empty?
-
+    extra_rpms = options[:extra_packages]
+    yum_install(*extra_rpms) unless extra_rpms.empty?
 
     store_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
     shell! 'user', "mkdir -p #{store_dir}"
