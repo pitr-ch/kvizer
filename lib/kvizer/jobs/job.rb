@@ -46,7 +46,7 @@ class Kvizer
 
       # helpers
       def yum_install(*packages)
-        vm.shell! 'root', "yum -y install #{packages.join(' ')}"
+        vm.shell! 'root', "yum -y install #{packages.flatten.map {|p| "\"#{p}\""}.join(' ')}"
       end
 
       def wait_for(timeout = nil, sleep_interval = 5, &condition)
