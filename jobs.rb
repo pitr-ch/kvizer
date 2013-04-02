@@ -22,6 +22,7 @@ job 'install-htop' do
     yum_install "htop"
     yum_install "multitail"
     yum_install "ack"
+    shell 'root', 'echo "set bg=dark" >> /etc/vimrc'
   end
 end
 
@@ -152,7 +153,7 @@ end
 
 job 'install-packaging' do
   online do
-    yum_install %w(tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt libxslt-devel)
+    yum_install %w(tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt libxslt-devel scl-utils scl-utils-build spec2scl)
 
     # koji setup
     shell! 'user', 'mkdir $HOME/.koji'
@@ -174,6 +175,9 @@ end
 
 job 'package_build_rpms' do
   online do
+    extra_rpms = options[:extra_packages]
+    yum_install(*extra_rpms) unless extra_rpms.empty?
+
     store_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
     shell! 'user', "mkdir -p #{store_dir}"
 
