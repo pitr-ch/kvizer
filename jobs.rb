@@ -22,6 +22,7 @@ job 'install-htop' do
     yum_install "htop"
     yum_install "multitail"
     yum_install "ack"
+    shell 'root', 'echo "set bg=dark" >> /etc/vimrc'
   end
 end
 
