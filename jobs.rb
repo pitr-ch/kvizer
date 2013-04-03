@@ -108,7 +108,7 @@ job 'install-guest-additions' do
     if vm.rhel?
       shell! 'root', 'rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm'
     end
-    yum_install %w(dkms kernel-devel)
+    yum_install *%w(dkms kernel-devel)
     shell! 'root', 'yum -y groupinstall "Development Tools"'
     shell! 'root',
            "wget http://download.virtualbox.org/virtualbox/#{version}/VBoxGuestAdditions_#{version}.iso"
@@ -153,7 +153,7 @@ end
 
 job 'install-packaging' do
   online do
-    yum_install %w(tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt libxslt-devel scl-utils scl-utils-build spec2scl)
+    yum_install *%w(tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt libxslt-devel scl-utils scl-utils-build spec2scl)
 
     # koji setup
     shell! 'user', 'mkdir $HOME/.koji'
