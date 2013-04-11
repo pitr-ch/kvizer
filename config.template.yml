@@ -63,9 +63,9 @@
 - base
 - update
 - add-user
+- install-essentials
 - install-guest-additions
 - setup-shared-folders
-- install-htop
 - install-packaging
 - add-katello-repo
 - install-katello
