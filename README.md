@@ -71,19 +71,23 @@ There are three shared folders: `redhat`, `remote_bin` and `support`.
 
 ### Create katello base image
 
-First you must create a base Fedora 16 virtual server. This will serve as origin image for other clones which you'll use for development.
+First you must create a base Fedora virtual server. This will serve as origin image for other clones which you'll use for development.
 
--   download image: `http://archive.fedoraproject.org/pub/fedora/linux/releases/16/Fedora/x86_64/iso/Fedora-16-x86_64-netinst.iso`
--   create virtual machine named 'clean-f16' in virtual box
+-   download one of images: 
+    - Fedora 16 `http://archive.fedoraproject.org/pub/fedora/linux/releases/16/Fedora/x86_64/iso/Fedora-16-x86_64-netinst.iso`
+    - Fedore 17 `http://archive.fedoraproject.org/pub/fedora/linux/releases/17/Fedora/x86_64/iso/Fedora-17-x86_64-netinst.iso`
+    - Fedora 18 `http://archive.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-netinst.iso`
+-   create virtual machine named 'clean-fedora' in virtual box
 -   note that for katello virtual machine you should allocate ~40GB of diskspace, 1.5GB of RAM and 2 CPU cores is also a good option
 -   fill in these during installation
     -   root password: katello
         -   minimal installation
-        -   Use `Customize now` and add packages:
+        -   If using Fedora 16 or 17 use `Customize now` and add packages:
             -   Applications/editors
             -   Servers/ServerConfigurationTools
             -   BaseSystem/Base
             -   BaseSystem/SystemTools
+        -   On Fedora 18 just minimal installation should work for you
 -   create a snapshot of you virtual machine named "clean-installation"
 -   install arp-scan on host (Kvizer actually uses this for detecting virtual machine ip address)
 
@@ -123,7 +127,7 @@ _RHEL support is experimental._
 
 ### Creating base image
 
-Run `kvizer build-base --vm clean-f16 --name katello-base` to create base development image from cleanly installed machine.
+Run `kvizer build-base --vm clean-fedora --name katello-base` to create base development image from cleanly installed machine.
 
 ## Cloning a machine for development
 
