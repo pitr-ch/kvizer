@@ -164,8 +164,8 @@ command 'ci' do
     opt :name, "machine name", :short => '-n', :type => :string
     opt :base, "Base for cloning", :type => :string, :default => kvizer.config.katello_base
     opt :use_koji, "Use koji for building rpms"
-    opt :extra_packages, 'additional rpms to be downloaded and installed in form of URLs separated by space',
-        :type => :string, :default => '', :short => '-e', :multi => true
+    opt :extra_packages, "additional rpms to be downloaded and installed in form of URLs/files, use multiple '-e' specify more rpms",
+        :type => :string, :short => '-e', :multi => true
   end
   run do
     branch       = @options[:branch] || kvizer.config.job_options.package_prepare.branch
