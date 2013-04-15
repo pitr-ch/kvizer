@@ -148,7 +148,7 @@ command 'execute' do
       die :job, "'#{@options[:job]}' could not find a job, avaliable:\n  " +
           "#{kvizer.job_definitions.keys.join("\n  ")}"
     end
-    get_vm.run_job job, @options[:options] ? eval(@options[:options]) : {}
+    job.run get_vm, @options[:options] ? eval(@options[:options]) : {}
   end
 end
 
