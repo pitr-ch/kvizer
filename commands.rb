@@ -119,11 +119,13 @@ end
 
 command 'build-base' do
   options do
-    banner "Creates base developing machine from vm with clean-installation of a system. This image is then used" +
-               "for cloning development machines or to ru ci commands."
-    vm_option.call self, 'Name of a clean installation'
-    opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
-    opt :product, "Product to install ",
+    banner 'Creates base developing machine from vm with clean-installation of a system. This image is then used' +
+               'for cloning development machines or to ru ci commands.'
+    vm_option.call self, 'Name of a clean installation', 'clean-rhel63'
+    opt :name, 'Name of the new machine',
+        :short   => '-n', :type => :string,
+        :default => "base-#{Time.now.strftime('%y-%m-%d')}"
+    opt :product, 'Product to install',
         :short    => '-p', :type => :string,
         :required => false, :default => kvizer.config.job_options.send('add-katello-repo').product
   end
