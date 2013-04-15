@@ -63,9 +63,9 @@
 - base
 - update
 - add-user
+- install-essentials
 - install-guest-additions
 - setup-shared-folders
-- install-htop
 - install-packaging
 - add-katello-repo
 - install-katello
@@ -90,12 +90,10 @@
     :use_koji: false
   :add-katello-repo:
     :repositories:
-      :fedora:
+     :fedora: # currently Fedora 18 is used by default, rename to fedora18 to disable
         :katello:
-          :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/Fedora/16/x86_64/katello-repos-1.2.4-1.fc16.noarch.rpm"
-          :latest: "http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/16/x86_64/katello-repos-latest.rpm"
-        :cfse:
-           :release: "http://download.englab.brq.redhat.com/rel-eng/CloudForms/1.1/latest/el6-se/x86_64/os/"
+          :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/Fedora/18/x86_64/katello-repos-1.2.4-1.fc16.noarch.rpm"
+          :latest: "http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/18/x86_64/katello-repos-latest.rpm"
       :rhel:
         :katello:
           :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/RHEL/6Server/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm"

@@ -16,16 +16,6 @@ job 'base' do
   end
 end
 
-# TODO rename job
-job 'install-htop' do
-  online do
-    yum_install "htop"
-    yum_install "multitail"
-    yum_install "ack"
-    shell 'root', 'echo "set bg=dark" >> /etc/vimrc'
-  end
-end
-
 job 'disable-selinux' do
   online do
     shell 'root', 'sed "s/SELINUX=.*/SELINUX=disabled/" -i /etc/selinux/config'
@@ -99,6 +89,17 @@ job 'add-user' do
            'sed -i -E "s/Defaults\s+requiretty/# Defaults\trequiretty/" /etc/sudoers'
     shell! 'root', 'chmod u-w /etc/sudoers'
     shell! 'user', 'sudo echo a' # test
+  end
+end
+
+job 'install-essentials' do
+  online do
+    yum_install 'wget'
+    yum_install "htop"
+    yum_install "multitail"
+    yum_install "ack"
+    yum_install "vim"
+    shell 'root', 'echo "set bg=dark" >> /etc/vimrc'
   end
 end
 
