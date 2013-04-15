@@ -194,3 +194,30 @@ command 'restore' do
     vm.run_and_wait
   end
 end
+
+command 'production-katello' do
+  options do
+    banner 'Clone a machine with production Katello.'
+    opt :name, 'Name of the new machine', :short => '-n', :type => :string, :default => 'production-katello'
+    vm_option.call self, nil, kvizer.config.katello_base
+  end
+  run { clone_vm get_vm, @options[:name], 'configure-katello' }
+end
+
+command 'devel-katello' do
+  options do
+    banner 'Clone a machine with Katello for development.'
+    opt :name, 'Name of the new machine', :short => '-n', :type => :string, :default => 'devel-katello'
+    vm_option.call self, nil, kvizer.config.katello_base
+  end
+  run { clone_vm get_vm, @options[:name], 'setup-development' }
+end
+
+command 'a-machine' do
+  options do
+    banner 'Clone a machine with Katello for development.'
+    opt :name, 'Name of the new machine', :short => '-n', :type => :string, :required => true
+    vm_option.call self, nil, kvizer.config.katello_base
+  end
+  run { clone_vm get_vm, @options[:name], 'add-katello-repo' }
+end
