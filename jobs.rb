@@ -94,19 +94,18 @@ end
 
 job 'install-essentials' do
   online do
-    yum_install 'wget'
-    yum_install "htop"
-    yum_install "multitail"
-    yum_install "ack"
-    yum_install "vim"
+    if vm.rhel? && !shell('root', 'rpm -q epel-release').success
+      shell! 'root', 'rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm'
+    end
+    yum_install *%w(wget htop multitail ack vim)
     shell 'root', 'echo "set bg=dark" >> /etc/vimrc'
   end
 end
 
 job 'install-guest-additions' do
   online do
-    version = config.virtual_box_version
-    if vm.rhel?
+    version = host.virtual_box_version
+    if vm.rhel? && !shell('root', 'rpm -q epel-release').success
       shell! 'root', 'rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm'
     end
     yum_install *%w(dkms kernel-devel)
