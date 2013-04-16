@@ -96,7 +96,7 @@ class Kvizer
 
     def shell!(user, cmd, options = {})
       result = shell user, cmd, options
-      raise CommandFailed, "cmd failed: #{cmd}\nerr:\n#{result.err}" unless result.success
+      raise CommandFailed, "cmd failed: #{cmd}" unless result.success
       result
     end
 
@@ -302,11 +302,6 @@ class Kvizer
         host.shell! "VBoxManage sharedfolder add \"#{self.name}\" --name \"#{name}\" --hostpath \"#{path}\" " +
                         "--automount"
       end
-    end
-
-    def run_job(job, options = {})
-      raise ArgumentError, "not a job #{job.inspect}" unless job.kind_of? Kvizer::Jobs::Job
-      job.run self, options
     end
 
     private

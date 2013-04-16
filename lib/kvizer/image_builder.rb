@@ -26,10 +26,13 @@ class Kvizer
       return unless job
       logger.info "step #{job.name}"
 
-      vm.run_job job, options.fetch(job.name.to_sym, {})
-
-      vm.take_snapshot job.name
-      step collection.next_job(job), last_job, options unless job == last_job
+      success = job.run vm, options.fetch(job.name.to_sym, {})
+      if success
+        vm.take_snapshot job.name
+        step collection.next_job(job), last_job, options unless job == last_job
+      else
+        exit 1
+      end
     end
 
   end
