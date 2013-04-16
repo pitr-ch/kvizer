@@ -110,8 +110,8 @@ job 'install-guest-additions' do
     end
     yum_install *%w(dkms kernel-devel)
     shell! 'root', 'yum -y groupinstall "Development Tools"'
-    shell! 'root',
-           "wget http://download.virtualbox.org/virtualbox/#{version}/VBoxGuestAdditions_#{version}.iso"
+    iso_url ="http://download.virtualbox.org/virtualbox/#{version}/VBoxGuestAdditions_#{version}.iso"
+    shell! 'root', "wget --progress=dot:mega #{iso_url}"
     shell! 'root', 'mkdir additions'
     shell! 'root', "mount -o loop VBoxGuestAdditions_#{version}.iso ./additions"
     shell! 'root', 'additions/VBoxLinuxAdditions.run'
