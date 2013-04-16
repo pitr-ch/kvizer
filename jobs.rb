@@ -227,9 +227,14 @@ job 'package_build_rpms' do
     logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
 
     to_install = rpms.select { |rpm| rpm !~ /headpin|devel|src\.rpm/ }
-    result     = shell 'root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"
-    unless result.success
-      shell 'root', "rpm -Uvh --oldpackage --force #{to_install.join ' '}"
+    install_args = ['root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"]
+    if options[:force_install]
+      result = shell *install_args
+      unless result.success
+        shell! 'root', "rpm -Uvh --oldpackage --force #{to_install.join ' '}"
+      end
+    else
+      shell! *install_args
     end
   end
 end

@@ -88,6 +88,7 @@
     :branch: master
   :package_build_rpms:
     :use_koji: false
+    :force_install: false
   :add-katello-repo:
     :repositories:
      :fedora: # currently Fedora 18 is used by default, rename to fedora18 to disable
