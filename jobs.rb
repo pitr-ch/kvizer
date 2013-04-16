@@ -169,7 +169,8 @@ job 'package_prepare' do
     shell! 'user', "git clone #{options[:source]} katello-build-source"
     shell! 'user', "cd katello-build-source; git checkout -b ci-#{options[:branch]} --track origin/#{options[:branch]}"
 
-    yum_install "puppet" # workaround for missing puppet user when puppet is installed by yum-builddep
+    yum_install 'puppet' # workaround for missing puppet user when puppet is installed by yum-builddep
+    yum_install *%w(scl-utils-build ruby193-build)
   end
 end
 
