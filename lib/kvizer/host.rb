@@ -29,6 +29,10 @@ class Kvizer
       result
     end
 
+    def virtual_box_version
+      @virtual_box_version ||= /^[\d.]+/.match(shell!('VBoxManage --version').out)[0]
+    end
+
     def setup_private_network
       out             = shell!("VBoxManage list hostonlyifs").out
       hostonly_config = config.hostonly

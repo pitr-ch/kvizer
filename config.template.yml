@@ -52,8 +52,6 @@
 # path to katello on the machine
 :katello_path: /home/user/redhat/katello
 
-:virtual_box_version: 4.2.6
-
 # name of the katello base machine
 :katello_base: katello-base
 
