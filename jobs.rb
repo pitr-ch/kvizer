@@ -55,7 +55,13 @@ job 'install-katello' do
 end
 
 job 'configure-katello' do
-  online { shell! 'root', 'katello-configure --no-bars --user-pass admin' }
+  online do
+    # TODO remove after puppet is fixed
+    shell! 'root', 'yum clean all'
+    shell! 'root', 'yum -y update puppet'
+
+    shell! 'root', 'katello-configure --no-bars --user-pass admin'
+  end
 end
 
 job 'turnoff-services' do
@@ -226,7 +232,7 @@ job 'package_build_rpms' do
 
     logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
 
-    to_install = rpms.select { |rpm| rpm !~ /headpin|devel|src\.rpm/ }
+    to_install   = rpms.select { |rpm| rpm !~ /headpin|devel|src\.rpm/ }
     install_args = ['root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"]
     if options[:force_install]
       result = shell *install_args
