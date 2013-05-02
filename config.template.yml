@@ -23,6 +23,11 @@
 # additional config file which is deep merged with this one default
 :config_overide:
 
+# for local git commits (e.g. packaging)
+git:
+  email: shadowman@redhat.com
+  name: Your name
+
 # configuration of a private network for katello machines
 :hostonly:
   :name: vboxnet0
@@ -74,6 +79,8 @@
 - setup-development
 :ci_jobs:
 - add-katello-repo
+- foreman_package_prepare
+- foreman_package_build_rpms
 - package_prepare
 - package_build_rpms
 - reconfigure-katello
@@ -84,6 +91,9 @@
   :package_prepare:
     :source: /home/user/redhat/katello
     :branch: master
+  :foreman_package_prepare:
+      :foreman_source: /home/user/redhat/foreman
+      :foreman_branch: develop
   :package_build_rpms:
     :use_koji: false
     :force_install: false
