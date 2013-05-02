@@ -162,6 +162,8 @@ command 'ci' do
         :short => '-g', :type => :string, :default => kvizer.config.job_options.package_prepare.source
     opt :branch, "branch to checkout",
         :short => '-b', :type => :string, :default => kvizer.config.job_options.package_prepare.branch
+    opt :foreman_branch, "foreman branch to checkout",
+        :short => '-f', :type => :string, :default => kvizer.config.job_options.foreman_package_prepare.foreman_branch
     opt :delete, "Delete virtual machine first if exists", :short => '-d'
     opt :name, "machine name", :short => '-n', :type => :string
     opt :base, "Base for cloning", :type => :string, :default => kvizer.config.katello_base
@@ -170,13 +172,18 @@ command 'ci' do
         :type => :string, :short => '-e', :multi => true
   end
   run do
-    branch       = @options[:branch] || kvizer.config.job_options.package_prepare.branch
-    vm_name      = @options[:name] || "ci-#{branch}#{'-koji' if @options[:use_koji]}"
-    vm_to_delete = kvizer.vm(vm_name)
+    branch         = @options[:branch] || kvizer.config.job_options.package_prepare.branch
+    foreman_branch = @options[:foreman_branch] || kvizer.config.job_options.foreman_package_prepare.foreman_branch
+    vm_name        = @options[:name] || "ci-#{branch}#{'-koji' if @options[:use_koji]}"
+    vm_to_delete   = kvizer.vm(vm_name)
 
     vm_to_delete.delete if @options[:delete] && vm_to_delete
     clone_vm kvizer.vm(@options[:base]), vm_name, 'add-katello-repo'
-    rebuild vm_name, 'package_prepare', 'system-test', :ci_jobs,
+    rebuild vm_name, 'foreman_package_prepare', 'system-test', :ci_jobs,
+            :foreman_package_prepare    => { :foreman_branch => foreman_branch },
+            :foreman_package_build_rpms => { :use_koji       => @options[:use_koji],
+                                             :extra_packages => @options[:extra_packages],
+                                             :foreman_branch => foreman_branch },
             :package_prepare    => { :source => @options[:git], :branch => branch },
             :package_build_rpms => { :use_koji       => @options[:use_koji],
                                      :extra_packages => @options[:extra_packages] }
