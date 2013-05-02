@@ -313,6 +313,8 @@ job 'package_build_rpms' do
 
     logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
 
+    # hotfix, remove when liquibase got stable
+    shell 'root', 'yum update --enablerepo=updates-testing liquibase'
     to_install   = rpms.select { |rpm| rpm !~ /headpin|devel|src\.rpm/ }
     install_args = ['root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"]
     if options[:force_install]
