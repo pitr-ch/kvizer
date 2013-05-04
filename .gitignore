@@ -1,5 +1,7 @@
 .idea
 .rbenv-version
+.bundle
+.bin
 config.yml
 gems
 logs
