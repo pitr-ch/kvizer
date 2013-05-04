@@ -143,7 +143,7 @@ job 'setup-development' do
     shell! 'root', "ln -s #{config.katello_path}/src/config/katello.yml /etc/katello/katello.yml"
 
     # reset oauth
-    shell! 'user', "sudo #{config.katello_path}/src/script/reset-oauth shhhh"
+    shell! 'user', "sudo #{config.katello_path}/src/script/reset-oauth katello"
     shell('root', 'service tomcat6 restart').success or shell!('root', 'service tomcat6 start')
     shell! 'root', 'service httpd restart'
 
