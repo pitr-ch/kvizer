@@ -28,9 +28,16 @@ class Kvizer
   require 'kvizer/jobs'
   require 'kvizer/image_builder'
 
-  attr_reader :logger, :host, :logging
+  def self.load_config
+    ConfigNode.new(YAML.load_file("#{root}/config.yml")).tap do |config|
+      config.deep_merge! YAML.load_file(File.expand_path(config.config_override, root)) if config.config_override
+    end
+  end
 
-  def initialize
+  attr_reader :logger, :host, :logging, :config
+
+  def initialize(config = self.class.load_config)
+    @config  = config
     @logging = Logging.new(self)
     @logger  = logging['kvizer']
     @host    = Host.new(self)
@@ -62,8 +69,12 @@ class Kvizer
     "Kvizer[#{vms.map(&:to_s).join(', ')}]"
   end
 
-  def root
+  def self.root
     @root ||= File.expand_path(File.join(File.dirname(__FILE__), '..'))
+  end
+
+  def root
+    self.class.root
   end
 
   def job_definitions
@@ -76,12 +87,4 @@ class Kvizer
       end
     end.jobs
   end
-
-  def config
-    @config ||=
-        ConfigNode.new(YAML.load_file("#{root}/config.yml")).tap do |config|
-          config.deep_merge! YAML.load_file(File.expand_path(config.config_overide, root)) if config.config_overide
-        end
-  end
-
 end
