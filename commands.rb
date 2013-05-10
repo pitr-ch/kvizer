@@ -1,223 +1,242 @@
-# TODO remove die form these helper methods
-
-def self.rebuild(vm_name, start_job_name, finish_job_name, collection_name = :base_jobs, job_options = {})
-  collection = Kvizer::Jobs::Collection.new_by_names kvizer, *kvizer.config.send(collection_name)
-  job = collection[start_job_name] rescue die(:job, "could not find job with name '#{start_job_name}'")
-
-  last_job = collection[finish_job_name] rescue nil
-  if last_job.nil? && finish_job_name
-    die(:finish_job, "could not find job with name'#{finish_job_name}'")
-  end
-
-  kb = Kvizer::ImageBuilder.new kvizer, kvizer.vm(vm_name), collection
-  kb.rebuild job.name, last_job, job_options
-end
-
-def self.clone_vm(vm, name, snapshot)
-  die :name, "is required, was '#{name}'" if name.nil? || name.empty?
-  die :snapshot, "could not find snapshot #{snapshot}" unless vm.snapshots.include?(snapshot)
-
-  vm.clone_vm(name, snapshot)
-end
-
-vm_option = lambda do |o, description = nil, default = nil|
-  options = { :short => "-m", :type => :string }
-  options.merge! :default => default if default
-  options.merge! :required => true unless default
-
-  o.opt :vm, description || 'Virtual Machine name', options
-end
-
-kvizer = self.kvizer
-
-command 'info' do
-  options { banner 'Displays information about vms.' }
-  run { puts kvizer.info.table }
-end
-
-command 'pry' do
-  options { banner 'Run pry session inside Kvizer. Useful for debugging or to run fine grained commands.' }
-  run { kvizer.pry }
-end
-
-command 'run' do
-  options do
-    banner 'Run a virtual machine.'
-    vm_option.call self
-  end
-  run { get_vm.run_and_wait }
-end
-
-command 'stop' do
-  options do
-    banner 'Stop a virtual machine.'
-    vm_option.call self
-  end
-  run { get_vm.stop_and_wait }
-end
-
-command 'delete' do
-  options do
-    banner 'Delete a virtual machine.'
-    vm_option.call self
-  end
-  run do
-    get_vm.delete
-  end
-end
-
-command 'power-off' do
-  options do
-    banner 'Power off a virtual machine immediately.'
-    vm_option.call self
-  end
-  run { get_vm.power_off! }
-end
-
-command 'ssh' do
-  options do
-    banner 'SSH an user to a machine. Starts the machine if it`s not running.'
-    opt :user, "User login", :short => "-u", :type => :string, :default => 'user'
-    opt :tunnel, "Creates SSH tunnel to a machine so you can access katello on https://localhost/katello",
-        :short => "-t", :default => false
-    vm_option.call self
-  end
-  run do
-    die :user, "user is required" unless @options[:user]
-    get_vm.connect(@options[:user], @options[:tunnel])
-  end
-end
-
-command 'clone' do
-  options do
-    banner 'Clone a virtual machine.'
-    opt :name, "Name of the new machine", :short => '-n', :type => :string, :required => true
-    opt :snapshot, "Name of a source snapshot", :short => '-s', :type => :string, :required => true
-    vm_option.call self, nil, kvizer.config.katello_base
-  end
-  run { clone_vm get_vm, @options[:name], @options[:snapshot] }
-end
-
-command 'build' do
-  options do
-    banner "Build a machine by running job collection. It'll run jobs from --start_job to --finish_job " +
-               "(or the last one of option is not supplied) from --collection defined in configuration. " +
-               "'It'll create snapshots after each job."
-    opt :start_job, 'Starting job name', :short => '-s', :type => :string, :required => true
-    vm_option.call self, 'Run build on a machine with this name', kvizer.config.katello_base
-    opt :finish_job, 'Finish job name', :short => '-f', :type => :string
-    opt :collection, 'Which job collection should be used',
-        :short => '-c', :type => :string, :default => 'base_jobs'
-    opt :options, 'Job options string value is evaluated by Ruby to get the Hash',
-        :short => '-o', :type => :string
-  end
-  run do
-    rebuild @options[:vm], @options[:start_job], @options[:finish_job], @options[:collection].to_sym,
-            @options[:options] ? eval(@options[:options]) : {}
-  end
-end
-
-command 'build-base' do
-  options do
-    banner 'Creates base developing machine from vm with clean-installation of a system. This image is then used' +
-               'for cloning development machines or to ru ci commands.'
-    vm_option.call self, 'Name of a clean installation', 'clean-rhel63'
-    opt :name, 'Name of the new machine',
-        :short   => '-n', :type => :string,
-        :default => "base-#{Time.now.strftime('%y-%m-%d')}"
-    opt :product, 'Product to install',
-        :short    => '-p', :type => :string,
-        :required => false, :default => kvizer.config.job_options.send('add-katello-repo').product
-  end
-  run do
-    clone_vm(get_vm, @options[:name], 'clean-installation')
-    rebuild @options[:name], 'base', nil, :base_jobs,
-            :"add-katello-repo" => { :product => @options[:product] }
-  end
-end
-
-command 'execute' do
-  options do
-    banner 'Execute single job on a machine without saving snapshot.'
-    opt :job, 'Job name', :short => '-j', :type => :string, :required => true
-    opt :options, 'Job options string value is evaluated by Ruby to get the Hash',
-        :short => '-o', :type => :string
-    vm_option.call self
-  end
-  run do
-    job = kvizer.job_definitions[@options[:job]]
-    unless job
-      die :job, "'#{@options[:job]}' could not find a job, avaliable:\n  " +
-          "#{kvizer.job_definitions.keys.join("\n  ")}"
+module Kvizer::CLI
+  class Info < Abstract
+    def execute
+      puts kvizer.info.table
     end
-    job.run get_vm, @options[:options] ? eval(@options[:options]) : {}
   end
-end
+  Main.subcommand 'info', 'Displays information about vms.', Info
 
-command 'ci' do
-  options do
-    banner 'It will build RPMs (locally or in Koji), install them, run katello-configuration and run system tests. ' +
-               'It uses --git to clone a source (from local or remote repository) and swithes to a --branch.'
-    opt :git, "url/path to git repository",
-        :short => '-g', :type => :string, :default => kvizer.config.job_options.package_prepare.source
-    opt :branch, "branch to checkout",
-        :short => '-b', :type => :string, :default => kvizer.config.job_options.package_prepare.branch
-    opt :delete, "Delete virtual machine first if exists", :short => '-d'
-    opt :name, "machine name", :short => '-n', :type => :string
-    opt :base, "Base for cloning", :type => :string, :default => kvizer.config.katello_base
-    opt :use_koji, "Use koji for building rpms"
-    opt :extra_packages, "additional rpms to be downloaded and installed in form of URLs/files, use multiple '-e' specify more rpms",
-        :type => :string, :short => '-e', :multi => true
+  class Pry < Abstract
+    def execute
+      kvizer.pry
+    end
   end
-  run do
-    branch       = @options[:branch] || kvizer.config.job_options.package_prepare.branch
-    vm_name      = @options[:name] || "ci-#{branch}#{'-koji' if @options[:use_koji]}"
-    vm_to_delete = kvizer.vm(vm_name)
+  Main.subcommand 'pry', 'Run pry session inside Kvizer. Useful for debugging or to run fine grained commands.', Pry
 
-    vm_to_delete.delete if @options[:delete] && vm_to_delete
-    clone_vm kvizer.vm(@options[:base]), vm_name, 'add-katello-repo'
-    rebuild vm_name, 'package_prepare', 'system-test', :ci_jobs,
-            :package_prepare    => { :source => @options[:git], :branch => branch },
-            :package_build_rpms => { :use_koji       => @options[:use_koji],
-                                     :extra_packages => @options[:extra_packages] }
+  class Run < Abstract
+    vm_name_parameter
+    def execute
+      vm.run_and_wait
+    end
   end
-end
+  Main.subcommand 'run', 'Run a virtual machine.', Run
 
-command 'restore' do
-  options do
-    banner 'Restores last snapshot of machine a boots it up (it will turn it off when needed)'
-    vm_option.call self
+  class Stop < Abstract
+    vm_name_parameter
+    def execute
+      vm.stop_and_wait
+    end
   end
-  run do
-    vm = get_vm
-    vm.restore_last_snapshot
-    vm.run_and_wait
-  end
-end
+  Main.subcommand 'stop', 'Stop a virtual machine.', Stop
 
-command 'production-katello' do
-  options do
-    banner 'Clone a machine with production Katello.'
-    opt :name, 'Name of the new machine', :short => '-n', :type => :string, :default => 'production-katello'
-    vm_option.call self, nil, kvizer.config.katello_base
+  class PowerOff < Abstract
+    vm_name_parameter
+    def execute
+      vm.power_off!
+    end
   end
-  run { clone_vm get_vm, @options[:name], 'configure-katello' }
-end
+  Main.subcommand 'power-off', 'Power off a virtual machine immediately.', PowerOff
 
-command 'devel-katello' do
-  options do
-    banner 'Clone a machine with Katello for development.'
-    opt :name, 'Name of the new machine', :short => '-n', :type => :string, :default => 'devel-katello'
-    vm_option.call self, nil, kvizer.config.katello_base
+  class Delete < Abstract
+    vm_name_parameter
+    def execute
+      vm.delete
+    end
   end
-  run { clone_vm get_vm, @options[:name], 'setup-development' }
-end
+  Main.subcommand 'delete', 'Delete a virtual machine.', Delete
 
-command 'a-machine' do
-  options do
-    banner 'Clone a machine with Katello for development.'
-    opt :name, 'Name of the new machine', :short => '-n', :type => :string, :required => true
-    vm_option.call self, nil, kvizer.config.katello_base
+  class Restore < Abstract
+    vm_name_parameter
+    def execute
+      vm.restore_last_snapshot
+    end
   end
-  run { clone_vm get_vm, @options[:name], 'add-katello-repo' }
+  Main.subcommand 'restore', 'Restores last snapshot of machine a boots it up (it will turn it off when needed)',
+                  Restore
+
+  class SSH < Abstract
+    option %w[-u --user], 'LOGIN', 'User login', default: 'user'
+    option %w[-t --tunnel], :flag,
+           'Creates SSH tunnel to a machine so you can access katello on https://localhost/katello'
+
+    vm_name_parameter
+
+    def execute
+      vm.connect user, tunnel?
+    end
+  end
+  Main.subcommand 'ssh', 'SSH an user to a machine. Starts the machine if it`s not running.', SSH
+
+
+  class Clone < Abstract
+    option %w[-t --template], 'TEMPLATE_VM', 'Template VM name.', default: kvizer_config.katello_base do |v|
+      kvizer.vm! v
+    end
+
+    def default_template
+      kvizer.vm! kvizer.config.katello_base
+    end
+
+    parameter 'SNAPSHOT', 'Template snapshot name.' do |snapshot|
+      template.snapshots.include?(snapshot) or
+          raise ArgumentError, "'#{snapshot}' not found between: #{template.snapshots.join(', ')}"
+      snapshot
+    end
+
+    new_vm_parameter
+
+    def execute
+      template.clone_vm(new_vm, snapshot)
+    end
+  end
+  Main.subcommand 'clone', 'Clone a virtual machine.', Clone
+
+  class Build < Abstract
+    vm_name_parameter
+
+    option %w[-c --collection], 'COLLECTION', 'Which job collection should be used.', default: :base_jobs do |collection|
+      Kvizer::Jobs::Collection.new_by_name kvizer, collection.to_sym
+    end
+
+    option %w[-o --options],
+           'OPTIONS',
+           'Job options string value is evaluated by Ruby to get the Hash.',
+           default: {} do |v|
+      eval v
+    end
+
+    def default_collection
+      Kvizer::Jobs::Collection.new_by_name kvizer, :base_jobs
+    end
+
+    parameter 'START[..FINISH]', 'Start and finish job to run.', attribute_name: :job_range do |range|
+      start, finish = range.split '..'
+      [collection[start], (collection[finish] if finish)]
+    end
+
+    def execute
+      Kvizer::ImageBuilder.new(kvizer, vm, collection).rebuild *job_range, options
+    end
+
+  end
+  Main.subcommand 'build',
+                  "Build a machine by running job collection. It'll run jobs from START to FINISH (or the last one)\n" +
+                      "from --collection defined in configuration. It'll create snapshots after each job.",
+                  Build
+
+  class BuildBase < Abstract
+    option %w[-t --template], 'TEMPLATE_VM', 'Template VM name.', default: 'clean-rhel63' do |v|
+      kvizer.vm! v
+    end
+
+    def default_template
+      kvizer.vm! 'clean-rhel63'
+    end
+
+    option %w[-p --product], 'PRODUCT', 'Product to install',
+           default: kvizer_config.job_options.send('add-katello-repo').product
+
+    new_vm_parameter "base-#{Time.now.strftime('%y-%m-%d')}"
+
+    def execute
+      template.clone_vm(new_vm, 'clean-installation')
+      cloned     = kvizer.vm new_vm
+      collection = Kvizer::Jobs::Collection.new_by_name kvizer, :base_jobs
+      Kvizer::ImageBuilder.new(kvizer, cloned, collection).rebuild collection['base'], nil
+    end
+  end
+
+  Main.subcommand 'build-base',
+                  "Creates base developing machine from vm with clean-installation of a system.\n" +
+                      'This image is then used for cloning development machines or to ru ci commands.',
+                  BuildBase
+
+
+  class CI < Abstract
+    #option %w[-g --git], 'GIT', 'Url or path to a git repository.',
+    #       default: kvizer_config.job_options.package_prepare.source
+    option %w[-d --delete], :flag, 'Delete virtual machine first if exists.'
+    option %w[-k --koji], :flag, 'Use koji for building rpms.'
+    option %w[-e --extra-packages], 'EXTRA',
+           "Additional rpms to be downloaded and installed in form of URLs/files, use multiple '-e' specify more rpms.",
+           multivalued: true
+
+    option %w[-t --template], 'TEMPLATE_VM', 'Template VM name.', default: kvizer_config.katello_base do |v|
+      kvizer.vm! v
+    end
+
+    def default_template
+      kvizer.vm! kvizer.config.katello_base
+    end
+
+    new_vm_parameter "ci-#{Time.now.strftime('%y.%m.%d-%H:%M')}"
+
+    def execute
+      vm_to_delete = kvizer.vm(new_vm)
+      vm_to_delete.delete if delete? && vm_to_delete
+
+      template.clone_vm new_vm, 'add-katello-repo'
+      collection = Kvizer::Jobs::Collection.new_by_name kvizer, :ci_jobs
+      Kvizer::ImageBuilder.
+          new(kvizer, kvizer.vm(new_vm), collection).
+          rebuild kvizer.job_definitions['re-update'], nil,
+                  :package_build_rpms => { :use_koji       => koji?,
+                                           :extra_packages => extra_packages_list }
+    end
+  end
+  Main.subcommand 'ci',
+                  "It will build RPMs (locally or in Koji), install them, run katello-configuration\n" +
+                      "and run system tests. It uses --git to clone a source (from local or remote repository)\n" +
+                      'and checkout to a --branch.',
+                  CI
+
+  class Execute < Abstract
+    option %w[-o --options],
+           'OPTIONS',
+           'Job options string value is evaluated by Ruby to get the Hash.',
+           default: {} do |v|
+      eval v
+    end
+
+
+    parameter 'JOB', 'Job name to execute', required: true do |name|
+      kvizer.job_definitions[name] or
+          raise ArgumentError, "job '#{name}' not recognized, available: #{kvizer.job_definitions.jobs.map(&:map)}"
+    end
+
+    vm_name_parameter
+
+    def execute
+      job.run vm, options
+    end
+  end
+  Main.subcommand 'execute', 'Execute single job on a machine without saving snapshot.', Execute
+
+  class Give < Abstract
+  end
+  Main.subcommand 'give', 'Give me a predefined machine', Give
+
+  class GiveProduction < Abstract
+    new_vm_parameter
+    def execute
+      kvizer.vm!(kvizer_config.katello_base).clone_vm(new_vm, 'configure-katello')
+    end
+  end
+  Give.subcommand 'production', 'Give a machine with production Katello.', GiveProduction
+
+  class GiveDevelopment < Abstract
+    new_vm_parameter
+    def execute
+      kvizer.vm!(kvizer_config.katello_base).clone_vm(new_vm, 'configure-katello')
+    end
+  end
+  Give.subcommand 'development', 'Give a machine with development Katello.', GiveDevelopment
+
+  class GiveAMachine < Abstract
+    new_vm_parameter
+    def execute
+      kvizer.vm!(kvizer_config.katello_base).clone_vm(new_vm, 'add-katello-repo')
+    end
+  end
+  Give.subcommand 'a-machine', 'Give a machine.', GiveAMachine
 end

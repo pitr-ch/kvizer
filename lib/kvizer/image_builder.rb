@@ -9,27 +9,25 @@ class Kvizer
       @logger     = logging["image-builder"]
     end
 
-    def rebuild(job_name, last_job = nil, options = {})
-      logger.info "rebuilding #{job_name}..#{last_job ? last_job.name : ''} with options #{options.inspect}"
-      job      = collection[job_name]
-      previous = collection.previous_job(job)
-      if previous
-        vm.restore_snapshot previous.name
+    def rebuild(start_job, last_job = nil, options = {})
+      logger.info "rebuilding #{start_job.name}..#{last_job ? last_job.name : ''} with options #{options.inspect}"
+      if (previous_job = collection.previous_job(start_job))
+        vm.restore_snapshot previous_job.name
       else
-        logger.error "cannot rebuild first job"
+        logger.error 'cannot rebuild first job'
         return
       end
-      step job, last_job, options
+      step start_job, last_job, options
     end
 
-    def step(job, last_job, options)
-      return unless job
-      logger.info "step #{job.name}"
+    def step(start_job, last_job, options)
+      return unless start_job
+      logger.info "step #{start_job.name}"
 
-      success = job.run vm, options.fetch(job.name.to_sym, {})
+      success = start_job.run vm, options.fetch(start_job.name.to_sym, {})
       if success
-        vm.take_snapshot job.name
-        step collection.next_job(job), last_job, options unless job == last_job
+        vm.take_snapshot start_job.name
+        step collection.next_job(start_job), last_job, options unless start_job == last_job
       else
         exit 1
       end

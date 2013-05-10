@@ -4,6 +4,5 @@ lib_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib'))
 $: << lib_path unless $:.include? lib_path
 
 require 'kvizer'
-require 'kvizer/runner'
-
-Kvizer::Runner.new.parse.run
+require 'kvizer/cli'
+Kvizer::CLI::Main.run

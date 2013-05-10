@@ -140,10 +140,10 @@ end
 job 'setup-development' do
   online do
     shell! 'root', 'rm /etc/katello/katello.yml'
-    shell! 'root', "ln -s #{config.katello_path}/src/config/katello.yml /etc/katello/katello.yml"
+    shell! 'root', "ln -s #{config.paths.katello}/config/katello.yml /etc/katello/katello.yml"
 
     # reset oauth
-    shell! 'user', "sudo #{config.katello_path}/src/script/reset-oauth katello"
+    shell! 'user', "sudo #{config.paths.katello}/script/reset-oauth katello"
     shell('root', 'service tomcat6 restart').success or shell!('root', 'service tomcat6 start')
     shell! 'root', 'service httpd restart'
 
@@ -170,10 +170,18 @@ job 'install-packaging' do
   end
 end
 
+build_dir = 'katello-build'
+
 job 'package_prepare' do
   online do
-    shell! 'user', "git clone #{options[:source]} katello-build-source"
-    shell! 'user', "cd katello-build-source; git checkout -b ci-#{options[:branch]} --track origin/#{options[:branch]}"
+    shell! 'user', "mkdir -p #{build_dir}"
+
+    options[:sources].each do |name, options|
+      path, branch = options.values_at :path, :branch
+      shell! 'user', "git clone #{path} #{build_dir}/#{name}"
+      shell! 'user',
+             "cd #{build_dir}/#{name}; git checkout -b ci-#{branch} --track origin/#{branch}"
+    end
 
     yum_install 'puppet' # workaround for missing puppet user when puppet is installed by yum-builddep
     yum_install *%w(scl-utils-build ruby193-build)
@@ -182,20 +190,23 @@ end
 
 job 'package_build_rpms' do
   online do
-    extra_rpms = options[:extra_packages]
-    yum_install(*extra_rpms) unless extra_rpms.empty?
+    options[:extra_packages].tap do |extra_rpms|
+      yum_install(*extra_rpms) unless extra_rpms.empty?
+    end
 
-    store_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
-    shell! 'user', "mkdir -p #{store_dir}"
+    built_rpm_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
+    shell! 'user', "mkdir -p #{built_rpm_dir}"
 
-    spec_dirs = %w(src cli katello-configure katello-utils repos selinux/katello-selinux scripts/system-test)
-    dist      = vm.fedora? ? '.fc16' : '.el6'
+    spec_dirs = %W(#{build_dir}/katello #{build_dir}/katello-cli #{build_dir}/katello-installer)
+    scl       = -> dir { %W(#{build_dir}/katello #{build_dir}/katello-installer).include? dir }
+
+    dist = vm.fedora? ? '.fc16' : '.el6'
     logger.info "building src.rpms"
     src_rpms = spec_dirs.inject({}) do |hash, dir|
-      result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --srpm --dist=#{dist}"
+      result = shell! 'user', "cd #{dir}; tito build --test --srpm --dist=#{dist} #{'--scl ruby193' if scl.(dir)}"
       result.out =~ /^Wrote: (.*src\.rpm)$/
       srpm_file = $1
-      shell! 'user', "cp #{srpm_file} #{store_dir}"
+      shell! 'user', "cp #{srpm_file} #{built_rpm_dir}"
       hash.update dir => srpm_file
     end
 
@@ -214,17 +225,18 @@ job 'package_build_rpms' do
              logger.info "collecting the rpms"
              task_ids.map do |dir, task_id|
                result = shell! 'user',
-                               "cd #{store_dir}; koji -c ~/.koji/katello-config download-scratch-build #{task_id}"
-               result.out.split("\n").map { |line| store_dir + /^Downloading \[\d+\/\d+\]: (.+)$/.match(line)[1] }
+                               "cd #{built_rpm_dir}; koji -c ~/.koji/katello-config download-scratch-build #{task_id}"
+               result.out.split("\n").map { |line| built_rpm_dir + /^Downloading \[\d+\/\d+\]: (.+)$/.match(line)[1] }
              end
            else
              logger.info "building rpms locally"
              spec_dirs.map do |dir|
                shell! 'root', "yum-builddep -y #{src_rpms[dir]}"
-               result = shell! 'user', "cd katello-build-source/#{dir}; tito build --test --rpm --dist=#{dist}"
+               result = shell! 'user',
+                               "cd #{dir}; tito build --test --rpm --dist=#{dist} #{'--scl ruby193' if scl.(dir)}"
                result.out =~ /Successfully built: (.*)\Z/
                $1.split(/\s/).tap do |rpms|
-                 shell! 'user', "cp #{rpms.join(' ')} #{store_dir}"
+                 shell! 'user', "cp #{rpms.join(' ')} #{built_rpm_dir}"
                  logger.info "rpms: #{rpms.join(' ')}"
                end
              end
@@ -260,6 +272,8 @@ job 'update' do
   online { shell! 'root', 'yum update -y' }
 end
 
+job 're-update', 'update'
+
 job 'relax-security' do
   online do
     # TODO only if /var/lib/pgsql/data - causes candlepin db problems (must create again and reset it
@@ -267,11 +281,19 @@ job 'relax-security' do
     #   shell('root', 'rm -rf /var/lib/pgsql/data')
     #   shell('root', 'su - postgres -c "initdb -D /var/lib/pgsql/data"')
 
-    # allow incoming connections to postgresql
-    unless shell('root', 'cat /var/lib/pgsql/data/pg_hba.conf | grep "192.168.25.0/24"').success
-      shell! 'root',
-             'echo "host all all 192.168.25.0/24 trust" | tee -a /var/lib/pgsql/data/pg_hba.conf'
-    end
+    # allow all connections to postgresql
+    rules = <<-RULES
+local  all      all                 trust
+host   all      all 127.0.0.1/32    trust
+host   all      all ::1/128         trust
+host   all      all 192.168.25.0/24 trust
+    RULES
+    #unless shell('root', 'cat /var/lib/pgsql/data/pg_hba.conf | grep "192.168.25.0/24"').success
+    shell! 'root',
+           %'echo "#{rules}" | tee /var/lib/pgsql/data/pg_hba.conf'
+
+
+    #end
     shell! 'root',
            "sed -i 's/^#.*listen_addresses =.*/listen_addresses = '\\'*\\'/ " +
                '/var/lib/pgsql/data/postgresql.conf'

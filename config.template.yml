@@ -49,8 +49,9 @@
   :remote_bin: ./remote_bin
   :support: ./support
 
-# path to katello on the machine
-:katello_path: /home/user/redhat/katello
+# path to repositories on the virtual machine
+:paths:
+  :katello: /home/user/redhat/katello
 
 # name of the katello base machine
 :katello_base: katello-base
@@ -75,6 +76,7 @@
   - setup-development
   :ci_jobs:
   - add-katello-repo
+  - re-update
   - package_prepare
   - package_build_rpms
   - reconfigure-katello
@@ -83,17 +85,28 @@
 # default job options
 :job_options:
   :package_prepare:
-    :source: /home/user/redhat/katello
-    :branch: master
+    :sources:
+      :katello:
+        :path: /home/user/redhat/katello
+        :branch: master
+      :katello-cli:
+        :path: /home/user/redhat/katello-cli
+        :branch: master
+      :katello-installer:
+        :path: /home/user/redhat/katello-installer
+        :branch: master
   :package_build_rpms:
     :use_koji: false
     :force_install: false
+    :extra_packages: []
   :add-katello-repo:
     :repositories:
-     :fedora: # currently Fedora 18 is used by default, rename to fedora18 to disable
+      :fedora: # currently Fedora 18 is used by default, rename to fedora18 to disable
         :katello:
           :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/Fedora/18/x86_64/katello-repos-1.2.4-1.fc16.noarch.rpm"
           :latest: "http://fedorapeople.org/groups/katello/releases/yum/nightly/Fedora/18/x86_64/katello-repos-latest.rpm"
+        :cfse:
+           :release: "http://download.englab.brq.redhat.com/rel-eng/CloudForms/1.1/latest/el6-se/x86_64/os/"
       :rhel:
         :katello:
           :release: "http://fedorapeople.org/groups/katello/releases/yum/1.2/RHEL/6Server/x86_64/katello-repos-1.2.4-1.el6.noarch.rpm"
