@@ -9,3 +9,5 @@ support/builds
 bin/kvizer
 support/koji/katello-config
 support/koji/katello.cert
+support/tmp
+old
