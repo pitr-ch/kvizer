@@ -294,3 +294,31 @@ job 'relax-security' do
     shell 'root', 'service postgresql restart'
   end
 end
+
+job 'reset-services' do
+  online do
+    shell 'root', 'service mongod stop'
+    shell 'root', 'service qpidd stop'
+    shell 'root', 'service httpd stop'
+    shell 'root', 'service tomcat6 stop'
+
+    # pulp
+    shell! 'root', 'rm -rf /var/lib/mongodb/pulp_database*'
+    shell! 'root', 'service mongod start'
+    wait_for(60, 2) { shell('root', 'mongo --eval "printjson(db.getCollectionNames())" 2>/dev/null 1>&2').success } or
+        raise 'mongo did not start'
+    shell! 'root', '/usr/bin/pulp-manage-db'
+
+    # candlepin
+    shell! 'root', '/usr/share/candlepin/cpdb --drop --create'
+    shell! 'root', '/usr/share/candlepin/cpsetup -s -k $(cat /etc/katello/keystore_password-file)'
+    # cpsetup alters tomcat configuration, use the original
+    shell! 'root', 'cp /etc/tomcat6/server.xml.original /etc/tomcat6/server.xml'
+
+
+    shell! 'root', 'service qpidd start'
+    shell! 'root', 'service mongod start'
+    shell! 'root', 'service httpd start'
+    shell! 'root', 'service tomcat6 start'
+  end
+end
