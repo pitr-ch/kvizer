@@ -56,28 +56,29 @@
 :katello_base: katello-base
 
 # job collections
-:base_jobs:
-- clean-installation
-- base
-- update
-- add-user
-- install-essentials
-- install-guest-additions
-- setup-shared-folders
-- install-packaging
-- add-katello-repo
-- install-katello
-- configure-katello
-- disable-selinux
-- turnoff-services
-- relax-security
-- setup-development
-:ci_jobs:
-- add-katello-repo
-- package_prepare
-- package_build_rpms
-- reconfigure-katello
-- system-test
+:collections:
+  :base_jobs:
+  - clean-installation
+  - base
+  - update
+  - add-user
+  - install-essentials
+  - install-guest-additions
+  - setup-shared-folders
+  - install-packaging
+  - add-katello-repo
+  - install-katello
+  - configure-katello
+  - disable-selinux
+  - turnoff-services
+  - relax-security
+  - setup-development
+  :ci_jobs:
+  - add-katello-repo
+  - package_prepare
+  - package_build_rpms
+  - reconfigure-katello
+  - system-test
 
 # default job options
 :job_options:

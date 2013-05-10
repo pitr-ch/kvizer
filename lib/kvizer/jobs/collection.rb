@@ -3,6 +3,16 @@ class Kvizer
     class Collection < Abstract
       attr_reader :jobs
 
+      def self.new_by_name(kvizer, collection_name)
+        job_names = if kvizer.config.collections.has_key?(collection_name.to_sym)
+                      kvizer.config.collections.send(collection_name.to_sym)
+                    else
+                      raise ArgumentError,
+                            "'#{collection_name}' not found, options: #{kvizer.config.collections.keys.join(', ')}"
+                    end
+        new_by_names kvizer, *job_names
+      end
+
       def self.new_by_names(kvizer, *job_names)
         new kvizer, *job_names.map { |name| kvizer.job_definitions[name] or
             raise ArgumentError, "unknown job '#{name}'" }
