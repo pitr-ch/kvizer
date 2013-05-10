@@ -21,7 +21,7 @@
 - ci
 
 # additional config file which is deep merged with this one default
-:config_overide:
+:config_override:
 
 # configuration of a private network for katello machines
 :hostonly:
