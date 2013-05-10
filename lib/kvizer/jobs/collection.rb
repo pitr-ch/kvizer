@@ -5,7 +5,7 @@ class Kvizer
 
       def self.new_by_names(kvizer, *job_names)
         new kvizer, *job_names.map { |name| kvizer.job_definitions[name] or
-            raise "unknown job '#{name}'" }
+            raise ArgumentError, "unknown job '#{name}'" }
       end
 
       def initialize(kvizer, *jobs)

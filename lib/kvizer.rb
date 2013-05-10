@@ -47,7 +47,7 @@ class Kvizer
     vms.find { |vm| vm.name == part_name } || begin
       regexp     = part_name.kind_of?(String) ? /#{part_name}/ : part_name
       candidates = vms.select { |vm| vm.name =~ regexp }
-      raise "ambiguous vm name '#{part_name}' candidates: #{candidates.map(&:name).join ', '}" if candidates.size > 1
+      raise ArgumentError, "ambiguous vm name '#{part_name}' candidates: #{candidates.map(&:name).join ', '}" if candidates.size > 1
       candidates.first
     end
   end
