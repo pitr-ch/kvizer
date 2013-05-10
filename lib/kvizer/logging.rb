@@ -1,3 +1,5 @@
+require 'rainbow'
+
 class Kvizer
   class Logging < Abstract
     class Formatter < Log4r::Formatter
