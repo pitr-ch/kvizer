@@ -167,6 +167,87 @@ job 'install-packaging' do
     shell! 'user', %(echo 'KOJI_OPTIONS=-c ~/.koji/katello-config build --nowait' | tee $HOME/.titorc)
     # patch koji-cli to be able to download scratch built rpms, see https://fedorahosted.org/koji/ticket/237
     shell! 'user', 'cat support/0001-koji-cli-add-download-scratch-build-command.patch | sudo patch -p0 /usr/bin/koji'
+
+    # local git setup
+    shell! 'user', "git config --global user.email '#{config.git.email}'; git config --global user.name '#{config.git.name}'"
+  end
+end
+
+job 'foreman_package_prepare' do
+  online do
+    shell! 'user', "git clone #{options[:foreman_source]} foreman-build-source"
+    shell! 'user', "cd foreman-build-source; git checkout -b ci-#{options[:foreman_branch]} --track origin/#{options[:foreman_branch]}"
+
+    yum_install *%w(scl-utils-build ruby193-build)
+  end
+end
+
+job 'foreman_package_build_rpms' do
+  online do
+    extra_rpms = options[:extra_packages]
+    yum_install(*extra_rpms) unless extra_rpms.empty?
+
+    store_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
+    shell! 'user', "mkdir -p #{store_dir}"
+
+    rpms_specs = "https://github.com/Katello/foreman-build"
+    shell! 'user', "git clone #{rpms_specs}"
+    shell! 'user', "cd foreman-build; git remote add local /home/user/foreman-build-source; git checkout -b ci-#{options[:foreman_branch]}; git pull local ci-#{options[:foreman_branch]} < /dev/null"
+
+    dist      = vm.fedora? ? '.fc18' : '.el6'
+    logger.info "building src.rpms"
+    spec_dirs = %w(.)
+    src_rpms = spec_dirs.inject({}) do |hash, dir|
+      result = shell! 'user', "cd foreman-build/#{dir}; tito build --test --srpm --dist=#{dist}"
+      result.out =~ /^Wrote: (.*src\.rpm)$/
+      srpm_file = $1
+      shell! 'user', "cp #{srpm_file} #{store_dir}"
+      hash.update dir => srpm_file
+    end
+
+    rpms = if options[:use_koji]
+             logger.info "building rpms in Koji"
+             task_ids = spec_dirs.inject({}) do |hash, dir|
+               tag    = vm.fedora? ? 'katello-thirdparty-foreman-fedora18' : 'katello-thirdparty-foreman-rhel6'
+               result = shell! 'user',
+                               "koji -c ~/.koji/katello-config build --scratch #{tag} #{src_rpms[dir]}"
+               hash.update dir => /^Created task: (\d+)$/.match(result.out)[1]
+             end
+
+             logger.info "waiting until rpms are finished"
+             shell! 'user', "koji -c ~/.koji/katello-config watch-task #{task_ids.values.join ' '}"
+
+             logger.info "collecting the rpms"
+             task_ids.map do |dir, task_id|
+               result = shell! 'user',
+                               "cd #{store_dir}; koji -c ~/.koji/katello-config download-scratch-build #{task_id}"
+               result.out.split("\n").map { |line| store_dir + /^Downloading \[\d+\/\d+\]: (.+)$/.match(line)[1] }
+             end
+           else
+             logger.info "building rpms locally"
+             spec_dirs.map do |dir|
+               shell! 'root', "yum-builddep -y #{src_rpms[dir]}"
+               result = shell! 'user', "cd foreman-build/#{dir}; tito build --test --rpm --dist=#{dist}"
+               result.out =~ /Successfully built: (.*)\Z/
+               $1.split(/\s/).tap do |rpms|
+                 shell! 'user', "cp #{rpms.join(' ')} #{store_dir}"
+                 logger.info "rpms: #{rpms.join(' ')}"
+               end
+             end
+           end.flatten
+
+    logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
+
+    to_install   = rpms.reject { |rpm| rpm =~ /mysql|mysql2|test|cli|devel|ec2|vmware|libvirt|ovirt.*rpm/ }
+    install_args = ['root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"]
+    if options[:force_install]
+      result = shell *install_args
+      unless result.success
+        shell! 'root', "rpm -Uvh --oldpackage --force #{to_install.join ' '}"
+      end
+    else
+      shell! *install_args
+    end
   end
 end
 
@@ -200,7 +281,7 @@ job 'package_build_rpms' do
     spec_dirs = %W(#{build_dir}/katello #{build_dir}/katello-cli #{build_dir}/katello-installer)
     scl       = -> dir { %W(#{build_dir}/katello #{build_dir}/katello-installer).include? dir }
 
-    dist = vm.fedora? ? '.fc16' : '.el6'
+    dist = vm.fedora? ? '.fc18' : '.el6'
     logger.info "building src.rpms"
     src_rpms = spec_dirs.inject({}) do |hash, dir|
       result = shell! 'user', "cd #{dir}; tito build --test --srpm --dist=#{dist} #{'--scl ruby193' if scl.(dir)}"
@@ -213,7 +294,7 @@ job 'package_build_rpms' do
     rpms = if options[:use_koji]
              logger.info "building rpms in Koji"
              task_ids = spec_dirs.inject({}) do |hash, dir|
-               tag    = vm.fedora? ? 'katello-nightly-fedora16' : 'katello-nightly-rhel6'
+               tag    = vm.fedora? ? 'katello-nightly-fedora18' : 'katello-nightly-rhel6'
                result = shell! 'user',
                                "koji -c ~/.koji/katello-config build --scratch #{tag} #{src_rpms[dir]}"
                hash.update dir => /^Created task: (\d+)$/.match(result.out)[1]
@@ -244,6 +325,8 @@ job 'package_build_rpms' do
 
     logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
 
+    # hotfix, remove when liquibase got stable
+    shell 'root', 'yum update --enablerepo=updates-testing liquibase'
     to_install   = rpms.select { |rpm| rpm !~ /headpin|devel|src\.rpm/ }
     install_args = ['root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"]
     if options[:force_install]

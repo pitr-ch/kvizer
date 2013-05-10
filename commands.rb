@@ -180,6 +180,8 @@ module Kvizer::CLI
       Kvizer::ImageBuilder.
           new(kvizer, kvizer.vm(new_vm), collection).
           rebuild kvizer.job_definitions['re-update'], nil,
+            :foreman_package_build_rpms => { :use_koji       => koji?,
+                                             :extra_packages => extra_packages_list },
                   :package_build_rpms => { :use_koji       => koji?,
                                            :extra_packages => extra_packages_list }
     end
