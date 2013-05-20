@@ -295,7 +295,12 @@ job 'system-test' do
 end
 
 job 'update' do
-  online { shell! 'root', 'yum update -y' }
+  online do
+    result = shell! 'root', 'yum update -y'
+    if result.out.include?('koji')
+      shell! 'user', 'cat support/0001-koji-cli-add-download-scratch-build-command.patch | sudo patch -p0 /usr/bin/koji'
+    end
+  end
 end
 
 job 're-update', 'update'
