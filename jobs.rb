@@ -167,6 +167,9 @@ job 'install-packaging' do
     shell! 'user', %(echo 'KOJI_OPTIONS=-c ~/.koji/katello-config build --nowait' | tee $HOME/.titorc)
     # patch koji-cli to be able to download scratch built rpms, see https://fedorahosted.org/koji/ticket/237
     shell! 'user', 'cat support/0001-koji-cli-add-download-scratch-build-command.patch | sudo patch -p0 /usr/bin/koji'
+
+    # local git setup
+    shell! 'user', "git config --global user.email '#{config.git.email}'; git config --global user.name '#{config.git.name}'"
   end
 end
 
@@ -183,6 +186,17 @@ job 'package_prepare' do
              "cd #{build_dir}/#{name}; git checkout -b ci-#{branch} --track origin/#{branch}"
     end
 
+                                                            # foreman part
+    branch     = options[:sources][:foreman][:branch]
+    rpms_specs = "https://github.com/Katello/foreman-build" # TODO config?
+    shell! 'user', "git config --global user.email \"#{config.git.email}\""
+    shell! 'user', "git config --global user.name \"#{config.git.name}\""
+    shell! 'user', "git clone #{rpms_specs} #{build_dir}/foreman-build"
+    shell! 'user', "cd #{build_dir}/foreman-build;
+                    git remote add local ../foreman;
+                    git checkout -b ci-#{branch};
+                    git pull -X theirs local ci-#{branch} < /dev/null"
+
     yum_install 'puppet' # workaround for missing puppet user when puppet is installed by yum-builddep
     yum_install *%w(scl-utils-build ruby193-build)
   end
@@ -197,10 +211,18 @@ job 'package_build_rpms' do
     built_rpm_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
     shell! 'user', "mkdir -p #{built_rpm_dir}"
 
-    spec_dirs = %W(#{build_dir}/katello #{build_dir}/katello-cli #{build_dir}/katello-installer)
-    scl       = -> dir { %W(#{build_dir}/katello #{build_dir}/katello-installer).include? dir }
+    spec_dirs = %W(#{build_dir}/foreman-build
+                   #{build_dir}/katello
+                   #{build_dir}/katello-cli
+                   #{build_dir}/katello-installer
+                   #{build_dir}/signo)
+    scl       = -> dir do
+      scls = %W(#{build_dir}/katello #{build_dir}/katello-installer #{build_dir}/foreman-build)
+      vm.rhel? && scls.include?(dir)
+    end
 
-    dist = vm.fedora? ? '.fc16' : '.el6'
+
+    dist = vm.fedora? ? '.fc18' : '.el6'
     logger.info "building src.rpms"
     src_rpms = spec_dirs.inject({}) do |hash, dir|
       result = shell! 'user', "cd #{dir}; tito build --test --srpm --dist=#{dist} #{'--scl ruby193' if scl.(dir)}"
@@ -213,7 +235,9 @@ job 'package_build_rpms' do
     rpms = if options[:use_koji]
              logger.info "building rpms in Koji"
              task_ids = spec_dirs.inject({}) do |hash, dir|
-               tag    = vm.fedora? ? 'katello-nightly-fedora16' : 'katello-nightly-rhel6'
+               product = src_rpms[dir] =~ /\/?foreman/ ? 'foreman' : 'katello' # not nice
+               os      = vm.fedora? ? 'fedora18' : 'rhel6'
+               tag     = "#{product}-nightly-#{os}"
                result = shell! 'user',
                                "koji -c ~/.koji/katello-config build --scratch #{tag} #{src_rpms[dir]}"
                hash.update dir => /^Created task: (\d+)$/.match(result.out)[1]
@@ -244,6 +268,8 @@ job 'package_build_rpms' do
 
     logger.info "All packaged rpms:\n  #{rpms.join("\n  ")}"
 
+    # hotfix, remove when liquibase got stable
+    shell 'root', 'yum update --enablerepo=updates-testing liquibase'
     to_install   = rpms.select { |rpm| rpm !~ /headpin|devel|src\.rpm/ }
     install_args = ['root', "yum localinstall -y --nogpgcheck #{to_install.join ' '}"]
     if options[:force_install]
@@ -269,7 +295,12 @@ job 'system-test' do
 end
 
 job 'update' do
-  online { shell! 'root', 'yum update -y' }
+  online do
+    result = shell! 'root', 'yum update -y'
+    if result.out.include?('koji')
+      shell! 'user', 'cat support/0001-koji-cli-add-download-scratch-build-command.patch | sudo patch -p0 /usr/bin/koji'
+    end
+  end
 end
 
 job 're-update', 'update'
