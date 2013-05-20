@@ -82,8 +82,6 @@ git:
   :ci_jobs:
   - add-katello-repo
   - re-update
-  - foreman_package_prepare
-  - foreman_package_build_rpms
   - package_prepare
   - package_build_rpms
   - reconfigure-katello
@@ -93,6 +91,9 @@ git:
 :job_options:
   :package_prepare:
     :sources:
+      :signo:
+        :path: /home/user/redhat/signo
+        :branch: master
       :katello:
         :path: /home/user/redhat/katello
         :branch: master
@@ -102,9 +103,9 @@ git:
       :katello-installer:
         :path: /home/user/redhat/katello-installer
         :branch: master
-  :foreman_package_prepare:
-      :foreman_source: /home/user/redhat/foreman
-      :foreman_branch: develop
+      :foreman:
+        :path: /home/user/redhat/foreman
+        :branch: develop
   :package_build_rpms:
     :use_koji: false
     :force_install: false
