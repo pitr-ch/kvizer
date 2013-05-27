@@ -197,7 +197,9 @@ job 'package_build_rpms' do
     built_rpm_dir = "/home/user/support/builds/#{Time.now.strftime '%y.%m.%d-%H.%M.%S'}-#{vm.safe_name}/"
     shell! 'user', "mkdir -p #{built_rpm_dir}"
 
-    spec_dirs = %W(#{build_dir}/katello #{build_dir}/katello-cli #{build_dir}/katello-installer)
+    spec_dirs = %W(#{build_dir}/katello #{build_dir}/katello-cli #{build_dir}/katello-installer
+                    #{build_dir}/katello-cli/system-test)
+    # FIXME this is ugly
     scl       = -> dir { %W(#{build_dir}/katello #{build_dir}/katello-installer).include? dir }
 
     dist = vm.fedora? ? '.fc16' : '.el6'
