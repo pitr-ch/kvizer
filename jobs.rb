@@ -159,7 +159,8 @@ end
 
 job 'install-packaging' do
   online do
-    yum_install *%w(tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt libxslt-devel scl-utils scl-utils-build spec2scl)
+    yum_install *%w(tito ruby-devel postgresql-devel sqlite-devel libxml2 libxml2-devel libxslt
+                    libxslt-devel scl-utils scl-utils-build spec2scl)
 
     # koji setup
     shell! 'user', 'mkdir $HOME/.koji'
@@ -169,7 +170,8 @@ job 'install-packaging' do
     shell! 'user', 'cat support/0001-koji-cli-add-download-scratch-build-command.patch | sudo patch -p0 /usr/bin/koji'
 
     # local git setup
-    shell! 'user', "git config --global user.email '#{config.git.email}'; git config --global user.name '#{config.git.name}'"
+    shell! 'user', "git config --global user.email '#{config.git.email}'"
+    shell! 'user', "git config --global user.name '#{config.git.name}'"
   end
 end
 
@@ -186,9 +188,10 @@ job 'package_prepare' do
              "cd #{build_dir}/#{name}; git checkout -b ci-#{branch} --track origin/#{branch}"
     end
 
-                                                            # foreman part
+    # foreman part
     branch     = options[:sources][:foreman][:branch]
-    rpms_specs = "https://github.com/Katello/foreman-build" # TODO config?
+    # TODO config?
+    rpms_specs = 'https://github.com/Katello/foreman-build'
     shell! 'user', "git config --global user.email \"#{config.git.email}\""
     shell! 'user', "git config --global user.name \"#{config.git.name}\""
     shell! 'user', "git clone #{rpms_specs} #{build_dir}/foreman-build"
@@ -197,7 +200,8 @@ job 'package_prepare' do
                     git checkout -b ci-#{branch};
                     git pull -X theirs local ci-#{branch} < /dev/null"
 
-    yum_install 'puppet' # workaround for missing puppet user when puppet is installed by yum-builddep
+    # workaround for missing puppet user when puppet is installed by yum-builddep
+    yum_install 'puppet'
     yum_install *%w(scl-utils-build ruby193-build)
   end
 end
@@ -235,11 +239,12 @@ job 'package_build_rpms' do
     rpms = if options[:use_koji]
              logger.info "building rpms in Koji"
              task_ids = spec_dirs.inject({}) do |hash, dir|
-               product = src_rpms[dir] =~ /\/?foreman/ ? 'foreman' : 'katello' # not nice
+               # TODO not nice
+               product = src_rpms[dir] =~ /\/?foreman/ ? 'foreman' : 'katello'
                os      = vm.fedora? ? 'fedora18' : 'rhel6'
                tag     = "#{product}-nightly-#{os}"
-               result = shell! 'user',
-                               "koji -c ~/.koji/katello-config build --scratch #{tag} #{src_rpms[dir]}"
+               result  = shell! 'user',
+                                "koji -c ~/.koji/katello-config build --scratch #{tag} #{src_rpms[dir]}"
                hash.update dir => /^Created task: (\d+)$/.match(result.out)[1]
              end
 
@@ -298,6 +303,7 @@ job 'update' do
   online do
     result = shell! 'root', 'yum update -y'
     if result.out.include?('koji')
+      # TODO make it dry
       shell! 'user', 'cat support/0001-koji-cli-add-download-scratch-build-command.patch | sudo patch -p0 /usr/bin/koji'
     end
   end
