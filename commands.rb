@@ -201,7 +201,7 @@ module Kvizer::CLI
 
     parameter 'JOB', 'Job name to execute', required: true do |name|
       kvizer.job_definitions[name] or
-          raise ArgumentError, "job '#{name}' not recognized, available: #{kvizer.job_definitions.jobs.map(&:map)}"
+          raise ArgumentError, "job '#{name}' not recognized, available: #{kvizer.job_definitions.keys.join(', ')}"
     end
 
     vm_name_parameter
