@@ -1,10 +1,10 @@
 module Kvizer::CLI
-  class Info < Abstract
+  class List < Abstract
     def execute
       puts kvizer.info.table
     end
   end
-  Main.subcommand 'info', 'Displays information about vms.', Info
+  Main.subcommand 'list', 'Displays information about vms.', List
 
   class Pry < Abstract
     def execute
