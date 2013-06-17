@@ -315,8 +315,6 @@ class Kvizer
 
     def stop
       unless status == :stopped
-        shell 'root', 'service pulp-server stop'
-        sleep 5
         ssh_close
         host.shell! "VBoxManage controlvm \"#{name}\" acpipowerbutton"
       end
