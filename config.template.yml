@@ -20,6 +20,9 @@
 - build-base
 - ci
 
+# regexp to select which machines should be managed by kvizer
+:guest_os_filter: Red Hat|Fedora
+
 # additional config file which is deep merged with this one default
 :config_override:
 

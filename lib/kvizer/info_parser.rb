@@ -58,13 +58,13 @@ class Kvizer
       mac_ip_map = get_mac_ip_map
 
       @attributes = raw_attributes.values.inject({}) do |hash, raw_attributes|
-        name       = raw_attributes['Name']
-        guest_os   = raw_attributes['Guest OS']
-        hash[name] = { :name     => name,
-                       :guest_os => guest_os,
-                       :mac      => mac = find_mac(raw_attributes, config.hostonly.name),
-                       :ip       => mac_ip_map[mac] }
-        hash
+        name     = raw_attributes['Name']
+        guest_os = raw_attributes['Guest OS']
+        next hash unless guest_os =~ /#{config.guest_os_filter}/
+        hash.update name => { :name     => name,
+                              :guest_os => guest_os,
+                              :mac      => mac = find_mac(raw_attributes, config.hostonly.name),
+                              :ip       => mac_ip_map[mac] }
       end
     end
 
