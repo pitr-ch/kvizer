@@ -219,7 +219,7 @@ module Kvizer::CLI
   class GiveProduction < Abstract
     new_vm_parameter
     def execute
-      kvizer.vm!(kvizer_config.katello_base).clone_vm(new_vm, 'configure-katello')
+      kvizer.vm!(self.class.kvizer_config.katello_base).clone_vm(new_vm, 'configure-katello')
     end
   end
   Give.subcommand 'production', 'Give a machine with production Katello.', GiveProduction
@@ -227,7 +227,7 @@ module Kvizer::CLI
   class GiveDevelopment < Abstract
     new_vm_parameter
     def execute
-      kvizer.vm!(kvizer_config.katello_base).clone_vm(new_vm, 'configure-katello')
+      kvizer.vm!(self.class.kvizer_config.katello_base).clone_vm(new_vm, 'configure-katello')
     end
   end
   Give.subcommand 'development', 'Give a machine with development Katello.', GiveDevelopment
@@ -235,7 +235,7 @@ module Kvizer::CLI
   class GiveAMachine < Abstract
     new_vm_parameter
     def execute
-      kvizer.vm!(kvizer_config.katello_base).clone_vm(new_vm, 'add-katello-repo')
+      kvizer.vm!(self.class.kvizer_config.katello_base).clone_vm(new_vm, 'add-katello-repo')
     end
   end
   Give.subcommand 'a-machine', 'Give a machine.', GiveAMachine
