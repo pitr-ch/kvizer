@@ -161,6 +161,20 @@ module Kvizer::CLI
            "Additional rpms to be downloaded and installed in form of URLs/files, use multiple '-e' specify more rpms.",
            multivalued: true
 
+    option %w[--kb --katello-branch], 'BRANCH', 'Use this branch for Katello build',
+           default:        kvizer_config.job_options.package_prepare.sources.katello.branch,
+           attribute_name: 'katello_branch'
+    option %w[--kib --katello-installer-branch], 'BRANCH', 'Use this branch for Katello build',
+           default:        kvizer_config.job_options.package_prepare.sources[:'katello-installer'].branch,
+           attribute_name: 'katello_installer_branch'
+    option %w[--fb --foreman-branch], 'BRANCH', 'Use this branch for Foreman build',
+           default:        kvizer_config.job_options.package_prepare.sources.foreman.branch,
+           attribute_name: 'foreman_branch'
+    option %w[--sb --signo-branch], 'BRANCH', 'Use this branch for Signo build',
+           default:        kvizer_config.job_options.package_prepare.sources.signo.branch,
+           attribute_name: 'signo_branch'
+
+
     option %w[-t --template], 'TEMPLATE_VM', 'Template VM name.', default: kvizer_config.katello_base do |v|
       kvizer.vm! v
     end
@@ -169,7 +183,7 @@ module Kvizer::CLI
       kvizer.vm! kvizer.config.katello_base
     end
 
-    new_vm_parameter "ci-#{Time.now.strftime('%y.%m.%d-%H:%M')}"
+    new_vm_parameter
 
     def execute
       vm_to_delete = kvizer.vm(new_vm)
@@ -180,8 +194,12 @@ module Kvizer::CLI
       Kvizer::ImageBuilder.
           new(kvizer, kvizer.vm(new_vm), collection).
           rebuild kvizer.job_definitions['re-update'], nil,
-                  :package_build_rpms => { :use_koji       => koji?,
-                                           :extra_packages => extra_packages_list }
+                  package_prepare:    { sources: { :katello             => { branch: katello_branch },
+                                                   :'katello-installer' => { branch: katello_installer_branch },
+                                                   :foreman             => { branch: foreman_branch },
+                                                   :signo               => { branch: signo_branch } } },
+                  package_build_rpms: { use_koji:       koji?,
+                                        extra_packages: extra_packages_list }
     end
   end
   Main.subcommand 'ci',

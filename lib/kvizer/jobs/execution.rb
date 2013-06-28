@@ -15,8 +15,8 @@ class Kvizer
 
         job_options     = config.job_options
         job_name        = job.name.to_sym
-        default_options = job_options.has_key?(job_name) ? job_options[job_name].to_hash : {}
-        @options        = default_options.merge(options) { |_, o, n| n ? n : o }
+        default_options = ConfigNode.new job_options.has_key?(job_name) ? job_options[job_name].to_hash : {}
+        @options        = default_options.deep_merge!(options).to_hash
       end
 
       def kvizer
